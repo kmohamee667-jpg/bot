@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --accent: #22d3ee;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', 'Noto Sans Arabic', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+            background-image: url('bg.png');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            position: fixed;
+            right: 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(to left, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+        }
+
+        .nav-item {
+            padding: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Main Content */
+        .main {
+            margin-right: 280px;
+            flex: 1;
+            padding: 3rem;
+            max-width: 1200px;
+        }
+
+        .header {
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #94a3b8;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 1rem;
+        }
+
+        .input-group {
+            margin-bottom: 2rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            min-height: 50px;
+            margin-bottom: 1rem;
+        }
+
+        .tag {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .tag span {
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .tag span:hover {
+            opacity: 1;
+        }
+
+        .add-input {
+            display: flex;
+            gap: 1rem;
+        }
+
+        input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.8rem 1.2rem;
+            border-radius: 12px;
+            color: white;
+            flex: 1;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add {
+            background: var(--accent);
+            color: #0f172a;
+        }
+
+        .btn-save {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+            margin-top: 2rem;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.2);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status-msg {
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">CONTROL PANEL</div>
+        <div id="nav-list">
+            <!-- Navigation items will be injected here -->
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <h1 id="current-command-title">اختر أمراً للتحكم</h1>
+            <p>إدارة الصلاحيات، الرولات، والأشخاص المسموح لهم باستخدام الأوامر.</p>
+        </div>
+
+        <div class="card" id="editor-card" style="display: none;">
+            <div class="section-header">
+                <h2 id="editor-title">إعدادات الأمر</h2>
+                <div class="status-indicator"></div>
+            </div>
+
+            <div class="input-group">
+                <label>الأعضاء المصرح لهم (Users)</label>
+                <div id="users-tags" class="tag-container"></div>
+                <div class="add-input">
+                    <input type="text" id="user-name-input" placeholder="اسم العضو">
+                    <input type="text" id="user-id-input" placeholder="ID العضو">
+                    <button class="btn-add" onclick="addItem('users')">إضافة</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>الرولات المسموح لها (Roles)</label>
+                <div id="roles-tags" class="tag-container"></div>
+                <div class="add-input">
+                    <input type="text" id="role-input" placeholder="اسم الرول أو ID">
+                    <button class="btn-add" onclick="addItem('roles')">إضافة</button>
+                </div>
+            </div>
+
+            <button class="btn-save" onclick="saveCommand()">حفظ التغييرات</button>
+            <div id="status-msg" class="status-msg"></div>
+        </div>
+    </div>
+
+    <script>
+        let commands = [];
+        let currentCommand = null;
+
+        async function fetchCommands() {
+            const res = await fetch('/api/commands');
+            commands = await res.json();
+            renderSidebar();
+        }
+
+        function renderSidebar() {
+            const nav = document.getElementById('nav-list');
+            nav.innerHTML = '';
+            commands.forEach(cmd => {
+                const item = document.createElement('div');
+                item.className = 'nav-item' + (currentCommand?.command === cmd.command ? ' active' : '');
+                item.innerHTML = `<span>⚡</span> <strong>${cmd.command}</strong>`;
+                item.onclick = () => selectCommand(cmd.command);
+                nav.appendChild(item);
+            });
+        }
+
+        function selectCommand(name) {
+            currentCommand = commands.find(c => c.command === name);
+            document.getElementById('current-command-title').innerText = `إدارة أمر : ${name}`;
+            document.getElementById('editor-card').style.display = 'block';
+            renderTags();
+            renderSidebar();
+        }
+
+        function renderTags() {
+            const usersContainer = document.getElementById('users-tags');
+            usersContainer.innerHTML = '';
+            currentCommand.users.forEach((u, i) => {
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                tag.innerHTML = `${u.name} (${u.id}) <span onclick="removeItem('users', ${i})">✕</span>`;
+                usersContainer.appendChild(tag);
+            });
+
+            const rolesContainer = document.getElementById('roles-tags');
+            rolesContainer.innerHTML = '';
+            currentCommand.roles.forEach((r, i) => {
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                tag.innerHTML = `${r} <span onclick="removeItem('roles', ${i})">✕</span>`;
+                rolesContainer.appendChild(tag);
+            });
+        }
+
+        function addItem(type) {
+            if (type === 'users') {
+                const name = document.getElementById('user-name-input').value;
+                const id = document.getElementById('user-id-input').value;
+                if (name && id) {
+                    currentCommand.users.push({ name, id });
+                    document.getElementById('user-name-input').value = '';
+                    document.getElementById('user-id-input').value = '';
+                }
+            } else {
+                const role = document.getElementById('role-input').value;
+                if (role) {
+                    currentCommand.roles.push(role);
+                    document.getElementById('role-input').value = '';
+                }
+            }
+            renderTags();
+        }
+
+        function removeItem(type, index) {
+            currentCommand[type].splice(index, 1);
+            renderTags();
+        }
+
+        async function saveCommand() {
+            const msg = document.getElementById('status-msg');
+            msg.innerText = 'جاري الحفظ...';
+            msg.style.color = 'var(--accent)';
+
+            try {
+                const res = await fetch(`/api/commands/${currentCommand.command}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        users: currentCommand.users,
+                        roles: currentCommand.roles
+                    })
+                });
+                if (res.ok) {
+                    msg.innerText = 'تم الحفظ بنجاح! ✅';
+                    msg.style.color = '#4ade80';
+                } else {
+                    throw new Error();
+                }
+            } catch (e) {
+                msg.innerText = 'فشل الحفظ ❌';
+                msg.style.color = '#ef4444';
+            }
+        }
+
+        fetchCommands();
+    </script>
+</body>
+</html>
