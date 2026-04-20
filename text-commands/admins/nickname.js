@@ -15,22 +15,42 @@ export default async (message, args) => {
     if (!allowedUser && !allowedRole) {
         return;
     }
-    // تحقق من الصيغة
-    if (args.length < 2) {
-        return message.reply('يرجى منشن العضو وكتابة الاسم الجديد: سمي @عضو اسم_جديد');
+    // تحديد العضو المستهدف والإجراء بناءً على عدد المعطيات
+    let member;
+    let newNick;
+
+    if (args.length === 0) {
+        // لا يوجد معطيات: إزالة لقب المستخدم نفسه
+        member = message.member;
+        newNick = null;
+    } else if (args.length === 1) {
+        // منشن فقط: إزالة لقب العضو المذكور
+        member = message.mentions.members.first();
+        if (!member) {
+            return message.reply('يرجى منشن العضو بشكل صحيح، أو اكتب الأمر بدون معطيات لإزالة لقبك.');
+        }
+        newNick = null;
+    } else {
+        // منشن + اسم جديد: تعيين اللقب الجديد
+        member = message.mentions.members.first();
+        if (!member) {
+            return message.reply('يرجى منشن العضو بشكل صحيح.');
+        }
+        newNick = args.slice(1).join(' ');
     }
-    const member = message.mentions.members.first();
-    if (!member) {
-        return message.reply('يرجى منشن العضو بشكل صحيح.');
-    }
-    const newNick = args.slice(1).join(' ');
+
     const oldNick = member.nickname || member.user.globalName || member.user.username;
     try {
         await member.setNickname(newNick);
     } catch (err) {
         return message.reply('لا يمكن تغيير الاسم المستعار لهذا العضو (ربما صلاحيات البوت غير كافية).');
     }
+
     // بناء الإمبيد
+    const actionLabel = newNick === null ? 'تم إزالة الاسم المستعار' : 'تم تغيير الاسم المستعار';
+    const nickDisplay = newNick === null
+        ? `\`\`\`${oldNick} => (لا يوجد)\`\`\``
+        : `\`\`\`${oldNick} => ${newNick}\`\`\``;
     const serverName = message.guild?.name || 'Server';
     const embed = new EmbedBuilder()
         .setColor('#52df00')
@@ -45,10 +65,10 @@ export default async (message, args) => {
         })
         .setTimestamp(new Date())
         .addFields([
-            { name: 'تم تغيير الاسم المستعار', value: `<@${member.user.id}>`, inline: false },
+            { name: actionLabel, value: `<@${member.user.id}>`, inline: false },
             { name: 'بواسطة', value: `<@${message.author.id}>`, inline: true },
             { name: 'في', value: `${message.channel.name} (<#${message.channel.id}>)`, inline: true },
-            { name: 'الاسم', value: `\`\`\`${oldNick} => ${newNick}\`\`\``, inline: false }
+            { name: 'الاسم', value: nickDisplay, inline: false }
         ]);
     await message.channel.send({ embeds: [embed], files: [{ attachment: 'imgs/signature.png', name: 'signature.png' }] });
 };
