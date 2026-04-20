@@ -16,9 +16,10 @@ export default async (oldState, newState) => {
 
     console.log(`Guild ID: ${guild.id}`);
 
-    const allowedServers = process.env.ALLOW_SERVER?.split(',').map(id => id.trim()) || [];
-    console.log(`Allowed servers: [${allowedServers.join(', ')}]`);
+    const allowedServers = process.env.ALLOW_SERVER?.split(',').map(id => id.trim()).filter(id => id) || [];
+    console.log(`Parsed allowed servers: ${JSON.stringify(allowedServers)}`);
 
+    console.log(`Checking if guild "${guild.id}" is in [${allowedServers.join(', ')}]`);
     if (!allowedServers.includes(guild.id)) {
         console.log(`Guild ${guild.id} is not in the allowed servers list — skipping`);
         return;
