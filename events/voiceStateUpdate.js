@@ -81,6 +81,7 @@ export default async (oldState, newState) => {
             });
 
             console.log(`New channel created: ${newChannel.id}`);
+            console.log('✅ تم انشاء قناه خاصه');
 
             // Initial Trusted/Blocked permissions
             if (vcData) {
@@ -144,8 +145,7 @@ export default async (oldState, newState) => {
             }).catch(() => {});
 
         } catch (error) {
-            console.error(`Error creating channel: ${error.message}`);
-            console.error(error);
+            console.error('❌ فشل انشاء القناه:', error);
         } finally {
             creatingChannels.delete(member.id);
         }
