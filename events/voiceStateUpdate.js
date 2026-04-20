@@ -120,7 +120,8 @@ export default async (oldState, newState) => {
             const embed = new EmbedBuilder()
                 .setTitle('👑 لوحة تحكم الغرفة الملكية')
                 .setDescription('مرحباً بك مجدداً! تم استعادة إعدادات غرفتك السابقة تلقائياً. تحكم في مملكتك من هنا.')
-                .setColor('#FFD700');
+                .setColor('#FFD700')
+                .setThumbnail('https://cdn-icons-png.flaticon.com/512/3556/3556098.png');
 
 
             const row1 = new ActionRowBuilder().addComponents(
