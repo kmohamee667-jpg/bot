@@ -1,4 +1,4 @@
-import { ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, AttachmentBuilder } from 'discord.js';
+import { ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import PrivateVC from '../models/PrivateVC.js';
 
 const jointocreateId = '1494164521630306369';
@@ -88,14 +88,11 @@ export default async (oldState, newState) => {
             const exists = guild.channels.cache.has(newChannel.id);
             if (!exists) return;
 
-            const imagePath = 'C:\\Users\\hameed nda\\.gemini\\antigravity\\brain\\ad730652-0298-4d3d-9dfc-0e384d2ced78\\vc_ultimate_guide_v4_1776408815265.png';
-            const file = new AttachmentBuilder(imagePath);
-
             const embed = new EmbedBuilder()
                 .setTitle('👑 لوحة تحكم الغرفة الملكية')
                 .setDescription('مرحباً بك مجدداً! تم استعادة إعدادات غرفتك السابقة تلقائياً. تحكم في مملكتك من هنا.')
-                .setColor('#FFD700')
-                .setImage('attachment://vc_ultimate_guide_v4_1776408815265.png');
+                .setColor('#FFD700');
+
 
             const row1 = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('vc_rename').setLabel('الاسم').setEmoji('✏️').setStyle(ButtonStyle.Primary),
@@ -116,8 +113,7 @@ export default async (oldState, newState) => {
             await newChannel.send({
                 content: `<@${member.id}>`,
                 embeds: [embed],
-                components: [row1, row2, row3],
-                files: [file]
+                components: [row1, row2, row3]
             }).catch(() => {});
 
         } catch (error) {
