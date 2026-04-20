@@ -5,23 +5,46 @@ const jointocreateId = '1494164521630306369';
 const creatingChannels = new Set();
 
 export default async (oldState, newState) => {
+    console.log('voiceStateUpdate event triggered');
+
     const { member, guild } = newState;
-    if (!guild) return;
+
+    if (!guild) {
+        console.log('No guild found on newState — skipping');
+        return;
+    }
+
+    console.log(`Guild ID: ${guild.id}`);
+
     const allowedServers = process.env.ALLOW_SERVER?.split(',') || [];
-    if (!allowedServers.includes(guild.id)) return;
+    console.log(`Allowed servers: [${allowedServers.join(', ')}]`);
+
+    if (!allowedServers.includes(guild.id)) {
+        console.log(`Guild ${guild.id} is not in the allowed servers list — skipping`);
+        return;
+    }
+
+    console.log(`User joining channel: ${newState.channelId ?? 'none'} | leaving channel: ${oldState.channelId ?? 'none'}`);
 
     // 1. User joins the "Join to Create" channel
     if (newState.channelId === jointocreateId) {
-        if (creatingChannels.has(member.id)) return;
+        console.log('User joined Join to Create channel - creating new VC');
+
+        if (creatingChannels.has(member.id)) {
+            console.log(`Member ${member.id} is already in the creation queue — skipping duplicate`);
+            return;
+        }
         creatingChannels.add(member.id);
 
         try {
             // Check if user already has an active channel (Search by ownerId only due to unique index)
             let vcData = await PrivateVC.findOne({ ownerId: member.id });
+            console.log(`Existing VC data for member ${member.id}: ${vcData ? JSON.stringify({ channelId: vcData.channelId, name: vcData.name }) : 'none'}`);
             
             if (vcData && vcData.channelId) {
                 const activeChannel = guild.channels.cache.get(vcData.channelId);
                 if (activeChannel) {
+                    console.log(`Member ${member.id} already has an active channel (${vcData.channelId}) — kicking back`);
                     await member.voice.setChannel(null).catch(() => {});
                     const dm = await member.createDM().catch(() => null);
                     if (dm) dm.send('أنت تملك قناة خاصة نشطة بالفعل!').catch(() => {});
@@ -32,10 +55,12 @@ export default async (oldState, newState) => {
             // Get trigger channel to find its parent category
             const triggerChannel = await guild.channels.fetch(jointocreateId).catch(() => null);
             const parentId = triggerChannel ? triggerChannel.parentId : null;
+            console.log(`Trigger channel parent category ID: ${parentId ?? 'none'}`);
             
             // Use saved settings or defaults
             const channelName = vcData?.name || `${member.user.username}'s VC`;
             const userLimit = vcData?.limit || 0;
+            console.log(`Creating channel with name="${channelName}", userLimit=${userLimit}`);
 
             const newChannel = await guild.channels.create({
                 name: channelName,
@@ -54,6 +79,8 @@ export default async (oldState, newState) => {
                     },
                 ],
             });
+
+            console.log(`New channel created: ${newChannel.id}`);
 
             // Initial Trusted/Blocked permissions
             if (vcData) {
@@ -117,7 +144,8 @@ export default async (oldState, newState) => {
             }).catch(() => {});
 
         } catch (error) {
-            console.error('Error in Join to Create:', error);
+            console.error(`Error creating channel: ${error.message}`);
+            console.error(error);
         } finally {
             creatingChannels.delete(member.id);
         }
