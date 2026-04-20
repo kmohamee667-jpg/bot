@@ -64,6 +64,7 @@ const client = new Client({
 
     await setupCommand('mas7', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
     await setupCommand('nickname', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
+    await setupCommand('adi', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
     await setupCommand('ban', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
     await setupCommand('unban', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
 
@@ -107,10 +108,12 @@ client.on('interactionCreate', interactionCreate);
 const COMMAND_MAP = {
     'مسح': 'mas7',
     'سمي': 'nickname',
+    'ادي': 'adi',
     'ban': 'ban',
     'unban': 'unban',
     'mas7': 'mas7',
-    'nickname': 'nickname'
+    'nickname': 'nickname',
+    'adi': 'adi'
 };
 
 // --- MESSAGE HANDLER ---
@@ -134,6 +137,9 @@ client.on('messageCreate', async (message) => {
         await mas7Command(message, args.slice(1));
     } else if (technicalName === 'nickname') {
         await nicknameCommand(message, args.slice(1));
+    } else if (technicalName === 'adi') {
+        const adiCommand = (await import('./text-commands/admins/adi.js')).default;
+        await adiCommand(message, args.slice(1));
     } else if (technicalName === 'ban' || technicalName === 'unban') {
         await banUnbanCommand(message, args);
     }
