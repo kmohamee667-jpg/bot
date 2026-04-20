@@ -140,11 +140,14 @@ export default async (oldState, newState) => {
                 new ButtonBuilder().setCustomId('vc_trusted_list').setLabel('قائمة الموثوقين').setEmoji('📜').setStyle(ButtonStyle.Primary)
             );
 
+            console.log(`Sending VC control panel to channel ${newChannel.id}`);
             await newChannel.send({
                 content: `<@${member.id}>`,
                 embeds: [embed],
-                components: [row1, row2, row3]
-            }).catch(() => {});
+                components: [row1, row2, row3],
+                files: [{ attachment: 'imgs/EditMessage.png', name: 'EditMessage.png' }]
+            }).catch(err => console.error('[VC Panel Send Fail]:', err));
+            console.log('[VC Panel] Sent successfully');
 
         } catch (error) {
             console.error('❌ فشل انشاء القناه:', error);

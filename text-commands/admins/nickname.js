@@ -15,28 +15,54 @@ export default async (message, args) => {
     if (!allowedUser && !allowedRole) {
         return;
     }
-    // تحقق من الصيغة
-    if (args.length < 2) {
-        return message.reply('يرجى منشن العضو وكتابة الاسم الجديد: سمي @عضو اسم_جديد');
+    // تحقق من الصيغة الجديدة
+    let targetMember = message.member; // Default to self
+    let oldNick = targetMember.nickname || targetMember.user.globalName || targetMember.user.username;
+    let action = 'set'; // or 'remove'
+
+    if (args.length === 0) {
+        // سمي -> remove self nickname
+        action = 'remove';
+    } else if (args.length === 1 && message.mentions.members.first()) {
+        // سمي @user -> remove target nickname
+        targetMember = message.mentions.members.first();
+        if (!targetMember) return message.reply('يرجى منشن العضو بشكل صحيح.');
+        oldNick = targetMember.nickname || targetMember.user.globalName || targetMember.user.username;
+        action = 'remove';
+    } else if (args.length >= 2 && message.mentions.members.first()) {
+        // سمي @user newname -> set nickname
+        targetMember = message.mentions.members.first();
+        if (!targetMember) return message.reply('يرجى منشن العضو بشكل صحيح.');
+        const newNick = args.slice(1).join(' ');
+        oldNick = targetMember.nickname || targetMember.user.globalName || targetMember.user.username;
+        try {
+            await targetMember.setNickname(newNick);
+            action = 'set';
+        } catch (err) {
+            console.error('[Nickname Error] Failed to set nickname:', err);
+            return message.reply('لا يمكن تغيير الاسم المستعار (صلاحيات؟).');
+        }
+    } else {
+        return message.reply('الصيغة: `سمي` (إزالة اسمك) | `سمي @عضو` (إزالة اسمه) | `سمي @عضو اسم_جديد`');
     }
-    const member = message.mentions.members.first();
-    if (!member) {
-        return message.reply('يرجى منشن العضو بشكل صحيح.');
-    }
-    const newNick = args.slice(1).join(' ');
-    const oldNick = member.nickname || member.user.globalName || member.user.username;
-    try {
-        await member.setNickname(newNick);
-    } catch (err) {
-        return message.reply('لا يمكن تغيير الاسم المستعار لهذا العضو (ربما صلاحيات البوت غير كافية).');
+
+    // Remove nickname
+    if (action === 'remove') {
+        try {
+            await targetMember.setNickname(null);
+        } catch (err) {
+            console.error('[Nickname Error] Failed to remove nickname:', err);
+            return message.reply('لا يمكن إزالة الاسم المستعار (صلاحيات؟).');
+        }
     }
     // بناء الإمبيد
     const serverName = message.guild?.name || 'Server';
+    const newNickDisplay = action === 'remove' ? '(تم الإزالة)' : oldNick;
     const embed = new EmbedBuilder()
         .setColor('#52df00')
         .setAuthor({
-            name: member.user.username,
-            iconURL: member.user.displayAvatarURL()
+            name: targetMember.user.username,
+            iconURL: targetMember.user.displayAvatarURL()
         })
         .setThumbnail('attachment://signature.png')
         .setFooter({
@@ -45,10 +71,10 @@ export default async (message, args) => {
         })
         .setTimestamp(new Date())
         .addFields([
-            { name: 'تم تغيير الاسم المستعار', value: `<@${member.user.id}>`, inline: false },
+            { name: action === 'remove' ? 'تم إزالة الاسم المستعار' : 'تم تغيير الاسم المستعار', value: `<@${targetMember.user.id}>`, inline: false },
             { name: 'بواسطة', value: `<@${message.author.id}>`, inline: true },
             { name: 'في', value: `${message.channel.name} (<#${message.channel.id}>)`, inline: true },
-            { name: 'الاسم', value: `\`\`\`${oldNick} => ${newNick}\`\`\``, inline: false }
+            { name: 'الاسم', value: `\`\`\`${oldNick} => ${newNickDisplay}\`\`\``, inline: false }
         ]);
     await message.channel.send({ embeds: [embed], files: [{ attachment: 'imgs/signature.png', name: 'signature.png' }] });
 };

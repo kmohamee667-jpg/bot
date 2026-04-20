@@ -255,23 +255,33 @@ export default async (interaction) => {
                 await PrivateVC.deleteOne({ _id: newOwnerData._id });
             }
 
-            // Transfer permissions
-            // 1. Give New Owner permissions
-            await channel.permissionOverwrites.edit(userId, { 
-                ManageChannels: true, 
-                MoveMembers: true, 
-                DeafenMembers: true, 
-                MuteMembers: true, 
-                Connect: true, 
-                ViewChannel: true 
-            });
+// Transfer permissions - with error handling
+            try {
+                // 1. Give New Owner permissions
+                await channel.permissionOverwrites.edit(userId, { 
+                    ManageChannels: true, 
+                    MoveMembers: true, 
+                    DeafenMembers: true, 
+                    MuteMembers: true, 
+                    Connect: true, 
+                    ViewChannel: true 
+                });
+                console.log(`[VC Transfer] Granted full perms to new owner ${userId}`);
 
-            // 2. Remove Old Owner permissions
-            await channel.permissionOverwrites.delete(interaction.user.id).catch(() => {});
-            
-            // 3. If old owner is trusted, keep their trust permissions, otherwise they follow @everyone rules
-            if (vcData.trustedUsers.includes(interaction.user.id)) {
-                await channel.permissionOverwrites.edit(interaction.user.id, { Connect: true, ViewChannel: true });
+                // 2. Remove Old Owner permissions
+                await channel.permissionOverwrites.delete(interaction.user.id).catch(err => {
+                    console.error(`[VC Transfer] Failed to delete old owner perms:`, err);
+                });
+                
+                // 3. If old owner is trusted, keep their trust permissions
+                if (vcData.trustedUsers.includes(interaction.user.id)) {
+                    await channel.permissionOverwrites.edit(interaction.user.id, { Connect: true, ViewChannel: true }).catch(err => {
+                        console.error(`[VC Transfer] Failed to set trust perms for old owner:`, err);
+                    });
+                }
+            } catch (error) {
+                console.error(`[VC Transfer Error] Channel ${channel.id}, from ${interaction.user.id} to ${userId}:`, error);
+                return interaction.update({ content: '❌ خطأ في نقل الملكية. تأكد من صلاحيات البوت (Manage Channels).', components: [] });
             }
 
             // Update DB
