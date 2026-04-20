@@ -9,12 +9,17 @@ function isArabic(text) {
 
 export function registerNicknameLogs(client, logChannelId) {
   client.on('guildMemberUpdate', async (oldMember, newMember) => {
-    // تحقق من التغيير في nickname
-    const oldNick = oldMember.nickname || oldMember.user.globalName || oldMember.user.username;
-    const newNick = newMember.nickname || newMember.user.globalName || newMember.user.username;
-    if (oldNick === newNick) return;
     // تجاهل إذا كان التغيير من بوت
     if (newMember.user.bot) return;
+
+    // تحقق من التغيير في nickname
+    // نكتشف حالة الحذف (كان هناك nickname ثم أصبح null) بشكل صريح
+    const nicknameRemoved = oldMember.nickname !== null && newMember.nickname === null;
+    const oldNick = oldMember.nickname || oldMember.user.globalName || oldMember.user.username;
+    const newNick = newMember.nickname || newMember.user.globalName || newMember.user.username;
+
+    // تجاهل إذا لم يتغير الـ nickname الفعلي (وليس مجرد تغيير في globalName/username)
+    if (!nicknameRemoved && oldMember.nickname === newMember.nickname) return;
     const channel = client.channels.cache.get(logChannelId);
     if (!channel) return;
     // تحديد من قام بالتغيير (حقيقي أو بوت)
@@ -37,15 +42,24 @@ export function registerNicknameLogs(client, logChannelId) {
     // تنسيق عرض الاسم القديم والجديد
     let blockMsg = '';
     const oldIsAr = isArabic(oldNick);
-    const newIsAr = isArabic(newNick);
-    if (!oldIsAr && newIsAr) {
-      blockMsg = `${oldNick} => ${newNick}`;
-    } else if (oldIsAr && !newIsAr) {
-      blockMsg = `${newNick} <= ${oldNick}`;
-    } else if (!oldIsAr && !newIsAr) {
-      blockMsg = `${oldNick} => ${newNick}`;
+    if (nicknameRemoved) {
+      // حالة الحذف: نعرض الاسم القديم ثم (تم الحذف) بشكل واضح
+      if (oldIsAr) {
+        blockMsg = `(تم الحذف) <= ${oldNick}`;
+      } else {
+        blockMsg = `${oldNick} => (تم الحذف)`;
+      }
     } else {
-      blockMsg = `${oldNick} => ${newNick}`;
+      const newIsAr = isArabic(newNick);
+      if (!oldIsAr && newIsAr) {
+        blockMsg = `${oldNick} => ${newNick}`;
+      } else if (oldIsAr && !newIsAr) {
+        blockMsg = `${newNick} <= ${oldNick}`;
+      } else if (!oldIsAr && !newIsAr) {
+        blockMsg = `${oldNick} => ${newNick}`;
+      } else {
+        blockMsg = `${oldNick} => ${newNick}`;
+      }
     }
 
     const user = newMember.user;
