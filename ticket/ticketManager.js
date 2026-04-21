@@ -121,11 +121,14 @@ export const confirmTicketCreation = async (interaction) => {
         components: [userCloseRow()]
     });
 
-    // Admin claim prompt
+// Admin claim prompt - admins only
     await channel.send({
         embeds: [claimPromptEmbed(ticket)],
         components: [claimPromptRow()]
-    });
+    }).then(msg => {
+        msg.createPermissionOverwrites(allowedRoles, { ViewChannel: true, ReadMessageHistory: true });
+        msg.createPermissionOverwrites([interaction.guild.id, ticket.userId], { ViewChannel: false, ReadMessageHistory: false });
+    }).catch(() => {});
 
     // Ping admins
     const pingRoles = allowedRoles.map(roleId => `<@&${roleId}>`).join(' ');
