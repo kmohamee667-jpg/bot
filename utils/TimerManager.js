@@ -20,11 +20,11 @@ class TimerManager {
         // Try to find theme in DB, fallback and seed if missing
         let theme = await TimerTheme.findOne({ name: themeName });
         
-        // Auto-seed default themes if missing
-        if (!theme) {
-            if (themeName === 'sunset') {
-                theme = await TimerTheme.create({
-                    name: 'sunset',
+        // Auto-seed/Update default themes
+        if (themeName === 'sunset') {
+            theme = await TimerTheme.findOneAndUpdate(
+                { name: 'sunset' },
+                {
                     backgroundPath: path.join(__dirname, '../imgs/timer_sunset.png'),
                     circleColor: '#FFFFFF',
                     textColor: '#FFFFFF',
@@ -32,10 +32,13 @@ class TimerManager {
                     showCircle: true,
                     motivationalText: 'KEEP GOING',
                     glowColor: 'rgba(255, 255, 255, 0)'
-                });
-            } else if (themeName === 'focus') {
-                theme = await TimerTheme.create({
-                    name: 'focus',
+                },
+                { upsert: true, new: true }
+            );
+        } else if (themeName === 'focus') {
+            theme = await TimerTheme.findOneAndUpdate(
+                { name: 'focus' },
+                {
                     backgroundPath: path.join(__dirname, '../imgs/timer_foucs.png'),
                     circleColor: '#FFFFFF',
                     textColor: '#FFFFFF',
@@ -43,19 +46,22 @@ class TimerManager {
                     showCircle: false,
                     motivationalText: 'STAY FOCUSED',
                     glowColor: 'rgba(255, 255, 255, 0)'
-                });
-            }
+                },
+                { upsert: true, new: true }
+            );
         }
         
-        // Final fallback if still not found
-        theme = theme || { 
-            name: 'sunset', 
-            font: 'Welcome Darling', 
-            showCircle: true, 
-            motivationalText: 'KEEP GOING', 
-            circleColor: '#FFFFFF', 
-            textColor: '#FFFFFF' 
-        };
+        // Final fallback if still not found (e.g., custom theme name that doesn't exist)
+        if (!theme) {
+            theme = await TimerTheme.findOne({ name: themeName }) || { 
+                name: 'sunset', 
+                font: 'Welcome Darling', 
+                showCircle: true, 
+                motivationalText: 'KEEP GOING', 
+                circleColor: '#FFFFFF', 
+                textColor: '#FFFFFF' 
+            };
+        }
 
         // Clear any old session for this channel to prevent duplicate key error
         await TimerSession.deleteMany({ channelId: channel.id });

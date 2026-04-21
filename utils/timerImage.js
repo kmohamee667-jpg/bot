@@ -43,8 +43,8 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
         ctx.fillRect(0, 0, width, height);
     }
 
-    // 2. Stronger Dark Overlay for better contrast
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    // 2. Lighter Dark Overlay for better background visibility
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)'; // Reduced from 0.55
     ctx.fillRect(0, 0, width, height);
 
     const centerX = width / 2;
@@ -85,8 +85,8 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
     ctx.shadowOffsetX = 3;
     ctx.shadowOffsetY = 3;
 
-    // A. Countdown Timer (Smaller Font)
-    ctx.font = `bold 110px "${font}", Arial`; 
+    // A. Countdown Timer (Optimized Font Loading)
+    ctx.font = `110px "${font}", Arial`; 
     ctx.fillText(timeString, centerX, centerY - 10);
 
     // B. Motivational Text (e.g., "KEEP GOING") 
