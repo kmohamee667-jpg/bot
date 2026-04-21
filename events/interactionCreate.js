@@ -32,9 +32,9 @@ export default async (interaction) => {
             const hasMale = member.roles.cache.has(maleRole?.id || '');
             if (!hasMale && maleRole) {
                 await member.roles.add(maleRole);
-                await interaction.reply({ content: `تم إضافة رول **${maleRole.name}** لك! 👨 ✅`, flags: [MessageFlags.Ephemeral] });
+                await interaction.reply({ content: `تم إضافة رول **${maleRole.name}** لك!  ✅`, flags: [MessageFlags.Ephemeral] });
             } else {
-                await interaction.reply({ content: 'لديك بالفعل رول الولاد! 👨', flags: [MessageFlags.Ephemeral] });
+                await interaction.reply({ content: '✅', flags: [MessageFlags.Ephemeral] });
             }
             return;
         }
@@ -43,9 +43,9 @@ export default async (interaction) => {
             const hasFemale = member.roles.cache.has(femaleRole?.id || '');
             if (!hasFemale && femaleRole) {
                 await member.roles.add(femaleRole);
-                await interaction.reply({ content: `تم إضافة رول **${femaleRole.name}** لك! 👩 ✅`, flags: [MessageFlags.Ephemeral] });
+                await interaction.reply({ content: `تم إضافة رول **${femaleRole.name}** لك!  ✅`, flags: [MessageFlags.Ephemeral] });
             } else {
-                await interaction.reply({ content: 'لديك بالفعل رول البنات! 👩', flags: [MessageFlags.Ephemeral] });
+                await interaction.reply({ content: '✅', flags: [MessageFlags.Ephemeral] });
             }
             return;
         }
@@ -362,19 +362,27 @@ export default async (interaction) => {
 
 // === TICKET SYSTEM HANDLERS ===
     // Check if ticket channel first (early return for performance)
-    if (interaction.channelId === config.ticketChannelId && interaction.isButton() && interaction.customId === 'ticket_create') {
-        console.log('🎫 [TICKET CREATE] Button clicked by', interaction.user.tag);
-        console.log('Channel:', interaction.channelId === config.ticketChannelId ? '✅ Match' : '❌ No match');
+    console.log('🔍 All interactions:', {
+        customId: interaction.customId,
+        channelId: interaction.channelId,
+        userId: interaction.user.id,
+        isButton: interaction.isButton(),
+        ticketChannel: config.ticketChannelId
+    });
+    
+    // TICKET CREATE - FIXED TOP PRIORITY (before all other checks)
+    if (interaction.isButton() && interaction.customId === 'ticket_create') {
+        console.log('🎫 [TICKET CREATE HIT] ✅');
         const { handleCreateTicket } = await import('../ticket/ticketManager.js');
         try {
             await handleCreateTicket(interaction);
-            console.log('✅ handleCreateTicket completed');
         } catch (error) {
-            console.error('❌ [TICKET CREATE ERROR]:', error);
-            await interaction.reply({ content: 'حدث خطأ! تحقق من console.', ephemeral: true }).catch(() => {});
+            console.error('💥 FULL TICKET ERROR:', error);
+            await interaction.reply({ content: 'خطأ داخلي! شوف console.', ephemeral: true }).catch(() => {});
         }
         return;
     }
+
 
 
     // All other ticket interactions
