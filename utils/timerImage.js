@@ -4,9 +4,10 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Register Custom Font
+// Register Custom Fonts
 try {
     GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/Welcome Darling.otf'), 'Welcome Darling');
+    GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/Super Squad.ttf'), 'Super Squad');
 } catch (err) {
     console.error('[Font Registration Error]:', err);
 }
@@ -25,15 +26,16 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
 
     const {
         backgroundPath = path.join(__dirname, '../imgs/timer_sunset.png'),
-        circleColor = '#FFFFFF', // Default White
+        circleColor = '#FFFFFF',
         textColor = '#FFFFFF',
-        font = 'Welcome Darling' // Use our new premium font!
+        font = 'Welcome Darling',
+        showCircle = true,
+        motivationalText = 'KEEP GOING'
     } = theme;
 
     // 1. Background
     try {
         const background = await loadImage(backgroundPath);
-        // Cover the whole rectangular area
         ctx.drawImage(background, 0, 0, width, height);
     } catch (e) {
         ctx.fillStyle = '#1a1a2e';
@@ -46,28 +48,30 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
 
     const centerX = width / 2;
     const centerY = height / 2;
-    const radius = 180; // Larger circle
+    const radius = 180; 
 
-    // 3. Draw Static Background Circle (Track)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = 14;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    ctx.stroke();
+    if (showCircle) {
+        // 3. Draw Static Background Circle (Track)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 14;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.stroke();
 
-    // 4. Draw Progress Arc (White, No Glow)
-    ctx.save();
-    ctx.strokeStyle = circleColor;
-    ctx.lineWidth = 16;
-    ctx.lineCap = 'round';
+        // 4. Draw Progress Arc (White, No Glow)
+        ctx.save();
+        ctx.strokeStyle = circleColor;
+        ctx.lineWidth = 16;
+        ctx.lineCap = 'round';
 
-    const startAngle = -Math.PI / 2; // Top
-    const endAngle = startAngle + (2 * Math.PI * percentage);
-    
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, startAngle, endAngle, false);
-    ctx.stroke();
-    ctx.restore();
+        const startAngle = -Math.PI / 2; // Top
+        const endAngle = startAngle + (2 * Math.PI * percentage);
+        
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle, false);
+        ctx.stroke();
+        ctx.restore();
+    }
 
     // 5. Text Rendering
     ctx.textAlign = 'center';
@@ -84,9 +88,9 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
     ctx.font = `bold 110px "${font}", Arial`; 
     ctx.fillText(timeString, centerX, centerY - 10);
 
-    // B. Motivational Text "KEEP GOING" (Smaller Font)
+    // B. Motivational Text (e.g., "KEEP GOING") 
     ctx.font = `italic 32px "${font}", Arial`;
-    ctx.fillText('KEEP GOING', centerX, centerY + 80);
+    ctx.fillText(motivationalText, centerX, centerY + 80);
 
     return canvas.toBuffer('image/png');
 }

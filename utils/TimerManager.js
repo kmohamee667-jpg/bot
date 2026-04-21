@@ -19,17 +19,43 @@ class TimerManager {
 
         // Try to find theme in DB, fallback and seed if missing
         let theme = await TimerTheme.findOne({ name: themeName });
-        if (!theme && themeName === 'sunset') {
-            theme = await TimerTheme.create({
-                name: 'sunset',
-                backgroundPath: path.join(__dirname, '../imgs/timer_sunset.png'),
-                circleColor: '#FFFFFF',
-                textColor: '#FFFFFF',
-                font: 'Arial',
-                glowColor: 'rgba(255, 255, 255, 0)'
-            });
+        
+        // Auto-seed default themes if missing
+        if (!theme) {
+            if (themeName === 'sunset') {
+                theme = await TimerTheme.create({
+                    name: 'sunset',
+                    backgroundPath: path.join(__dirname, '../imgs/timer_sunset.png'),
+                    circleColor: '#FFFFFF',
+                    textColor: '#FFFFFF',
+                    font: 'Welcome Darling',
+                    showCircle: true,
+                    motivationalText: 'KEEP GOING',
+                    glowColor: 'rgba(255, 255, 255, 0)'
+                });
+            } else if (themeName === 'focus') {
+                theme = await TimerTheme.create({
+                    name: 'focus',
+                    backgroundPath: path.join(__dirname, '../imgs/timer_foucs.png'),
+                    circleColor: '#FFFFFF',
+                    textColor: '#FFFFFF',
+                    font: 'Super Squad',
+                    showCircle: false,
+                    motivationalText: 'STAY FOCUSED',
+                    glowColor: 'rgba(255, 255, 255, 0)'
+                });
+            }
         }
-        theme = theme || { name: 'sunset', font: 'Arial', circleColor: '#FFFFFF', textColor: '#FFFFFF' };
+        
+        // Final fallback if still not found
+        theme = theme || { 
+            name: 'sunset', 
+            font: 'Welcome Darling', 
+            showCircle: true, 
+            motivationalText: 'KEEP GOING', 
+            circleColor: '#FFFFFF', 
+            textColor: '#FFFFFF' 
+        };
 
         // Clear any old session for this channel to prevent duplicate key error
         await TimerSession.deleteMany({ channelId: channel.id });

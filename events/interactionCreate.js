@@ -555,4 +555,26 @@ export default async (interaction) => {
             await handleStartTimer(interaction);
         }
     }
+
+    // 6. Handle Autocomplete (Themes)
+    if (interaction.isAutocomplete()) {
+        const focusedValue = interaction.options.getFocused();
+        const TimerTheme = (await import('../models/TimerTheme.js')).default;
+        const themes = await TimerTheme.find({ name: { $regex: focusedValue, $options: 'i' } }).limit(25);
+        
+        const choices = themes.map(theme => {
+            let label = theme.name.charAt(0).toUpperCase() + theme.name.slice(1);
+            if (theme.name === 'sunset') label = `🌅 Sunset`;
+            if (theme.name === 'focus') label = `🎯 Focus`;
+            return { name: label, value: theme.name };
+        });
+
+        // Default suggestions if nothing in DB yet
+        if (choices.length === 0) {
+            choices.push({ name: '🌅 Sunset', value: 'sunset' });
+            choices.push({ name: '🎯 Focus', value: 'focus' });
+        }
+
+        await interaction.respond(choices).catch(() => {});
+    }
 };
