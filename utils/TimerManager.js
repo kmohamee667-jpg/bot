@@ -31,6 +31,9 @@ class TimerManager {
         }
         theme = theme || { name: 'sunset', font: 'Arial', circleColor: '#FFFFFF', textColor: '#FFFFFF' };
 
+        // Clear any old session for this channel to prevent duplicate key error
+        await TimerSession.deleteMany({ channelId: channel.id });
+
         const session = await TimerSession.create({
             guildId: guild.id,
             channelId: channel.id,

@@ -124,7 +124,7 @@ client.on('voiceStateUpdate', voiceStateUpdate);
 client.on('interactionCreate', interactionCreate);
 client.on('channelDelete', (await import('./events/channelDelete.js')).default);
 
-client.once('ready', async () => {
+client.once('clientReady', async () => {
     console.log(`✅ Bot ready as ${client.user.tag}`);
     await initTicketSystem(client, config);
 
