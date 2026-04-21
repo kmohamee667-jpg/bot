@@ -39,8 +39,20 @@ export const handleCreateTicket = async (interaction) => {
     }
     
     if (openTicket) {
+        const channel = interaction.guild.channels.cache.get(openTicket.channelId);
+        if (!channel) {
+            await updateTicketStatus(openTicket.channelId, 'closed', interaction.user.id);
+            const cleanEmbed = new EmbedBuilder()
+                .setDescription('تم تنظيف تيكت قديم محذوف تلقائياً ✅\nيمكنك فتح تيكت جديد.')
+                .setColor('Green');
+            await interaction.editReply({ embeds: [cleanEmbed] });
+            return;
+        }
         console.log('❌ SPAM DETECTED - Open ticket:', openTicket.ticketId);
-        await interaction.editReply({ content: `لديك تيكيت مفتوح: <#${openTicket.channelId}> 🎫` });
+        const spamEmbed = new EmbedBuilder()
+            .setDescription(`لديك تيكيت مفتوح: <#${openTicket.channelId}> 🎫`)
+            .setColor('Orange');
+        await interaction.editReply({ embeds: [spamEmbed] });
         return;
     }
     
@@ -139,7 +151,12 @@ export const handleCloseTicket = async (interaction) => {
 
 export const executeCloseTicket = async (interaction) => {
     const ticket = await getTicketByChannelId(interaction.channelId);
-    if (!ticket) return interaction.reply({ content: 'تيكيت غير موجود!', ephemeral: true });
+    if (!ticket) {
+        const errEmbed = new EmbedBuilder()
+            .setDescription('تيكيت غير موجود!')
+            .setColor('Red');
+        return interaction.reply({ embeds: [errEmbed], ephemeral: true });
+    }
 
     // Complete deny user access
     await interaction.channel.permissionOverwrites.edit(ticket.userId, {
@@ -179,7 +196,10 @@ export const executeCloseTicket = async (interaction) => {
         components: [supportControlsRow()]
     });
 
-    await interaction.update({ content: '✅ تم إغلاق التيكيت', components: [], embeds: [] });
+    const closeSuccessEmbed = new EmbedBuilder()
+        .setDescription('✅ تم إغلاق التيكيت')
+        .setColor('Green');
+    await interaction.update({ embeds: [closeSuccessEmbed], components: [] });
 
     await sendLog(interaction.guild, `**تيكيت مغلق** 🔒\n<@${interaction.user.id}> أغلق <#${interaction.channelId}> (ID: ${ticket.ticketId})`);
 };
@@ -187,12 +207,18 @@ export const executeCloseTicket = async (interaction) => {
 export const handleClaimTicket = async (interaction) => {
     const ticket = await getTicketByChannelId(interaction.channelId);
     if (ticket.claimedBy) {
-        return interaction.reply({ content: `تم استلام التيكيت بالفعل بواسطة <@${ticket.claimedBy}>!`, ephemeral: true });
+        const claimedEmbed = new EmbedBuilder()
+            .setDescription(`تم استلام التيكيت بالفعل بواسطة <@${ticket.claimedBy}>!`)
+            .setColor('Yellow');
+        return interaction.reply({ embeds: [claimedEmbed], ephemeral: true });
     }
 
     const newTicket = await claimTicket(interaction.channelId, interaction.user.id);
     if (!newTicket) {
-        return interaction.reply({ content: 'خطأ في استلام التيكيت!', ephemeral: true });
+        const claimErrEmbed = new EmbedBuilder()
+            .setDescription('خطأ في استلام التيكيت!')
+            .setColor('Red');
+        return interaction.reply({ embeds: [claimErrEmbed], ephemeral: true });
     }
 
     // Restore user perms
@@ -220,7 +246,10 @@ export const handleClaimTicket = async (interaction) => {
         ]
     });
 
-    await interaction.reply({ content: '✅ تم استلام التيكيت!', ephemeral: true });
+    const claimSuccessEmbed = new EmbedBuilder()
+        .setDescription('✅ تم استلام التيكيت!')
+        .setColor('Green');
+    await interaction.reply({ embeds: [claimSuccessEmbed], ephemeral: true });
 
     await sendLog(interaction.guild, `**تيكيت مستلم** ✅\n<@${interaction.user.id}> استلم <#${interaction.channelId}> (ID: ${ticket.ticketId})`);
 };
@@ -248,6 +277,7 @@ export const handleReopenTicket = async (interaction) => {
 export const handleDeleteTicket = async (interaction) => {
     const ticket = await getTicketByChannelId(interaction.channelId);
     await sendLog(interaction.guild, `**تيكيت محذوف** 🗑️\n<@${interaction.user.id}> حذف <#${interaction.channelId}> (ID: ${ticket?.ticketId || 'N/A'})`);
+      await updateTicketStatus(interaction.channelId, 'closed', interaction.user.id);
     await interaction.channel.delete();
 };
 

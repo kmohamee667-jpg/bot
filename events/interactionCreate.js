@@ -63,7 +63,10 @@ export default async (interaction) => {
                     await handleDeleteTicket(interaction);
                     break;
                 default:
-                    await interaction.reply({ content: 'زر غير مدعوم', flags: [MessageFlags.Ephemeral] });
+const unknownEmbed = new EmbedBuilder()
+    .setDescription('زر غير مدعوم')
+    .setColor('Grey');
+await interaction.reply({ embeds: [unknownEmbed], flags: [MessageFlags.Ephemeral] });
             }
         } catch (error) {
             console.error('🎫 TICKET ERROR:', error);
