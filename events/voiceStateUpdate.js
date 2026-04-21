@@ -27,6 +27,28 @@ export default async (oldState, newState) => {
 
     console.log(`User joining channel: ${newState.channelId ?? 'none'} | leaving channel: ${oldState.channelId ?? 'none'}`);
 
+    // --- Dynamic JTC Locking/Unlocking ---
+    if (oldState.channelId !== newState.channelId) {
+        try {
+            const jtcChannel = guild.channels.cache.get(jointocreateId);
+            if (jtcChannel) {
+                // If user is in ANY channel that is NOT the JTC itself, lock JTC for them
+                if (newState.channelId && newState.channelId !== jointocreateId) {
+                    await jtcChannel.permissionOverwrites.edit(member.id, { 
+                        Connect: false,
+                        ViewChannel: false
+                    }).catch(() => {});
+                } 
+                // If user is NOT in any channel, unlock JTC for them
+                else if (!newState.channelId) {
+                    await jtcChannel.permissionOverwrites.delete(member.id).catch(() => {});
+                }
+            }
+        } catch (err) {
+            console.error('[JTC Permission Sync Error]:', err);
+        }
+    }
+
     // 1. User joins the "Join to Create" channel
     if (newState.channelId === jointocreateId) {
         console.log('User joined Join to Create channel - creating new VC');
@@ -43,13 +65,15 @@ export default async (oldState, newState) => {
             console.log(`Existing VC data for member ${member.id}: ${vcData ? JSON.stringify({ channelId: vcData.channelId, name: vcData.name }) : 'none'}`);
             
             if (vcData && vcData.channelId) {
-                const activeChannel = guild.channels.cache.get(vcData.channelId);
+                const activeChannel = guild.channels.cache.get(vcData.channelId) || await guild.channels.fetch(vcData.channelId).catch(() => null);
                 if (activeChannel) {
-                    console.log(`Member ${member.id} already has an active channel (${vcData.channelId}) — kicking back`);
-                    await member.voice.setChannel(null).catch(() => {});
-                    const dm = await member.createDM().catch(() => null);
-                    if (dm) dm.send('أنت تملك قناة خاصة نشطة بالفعل!').catch(() => {});
-                    return;
+                    // If the old channel is empty, delete it before creating a new one
+                    if (activeChannel.members.size === 0) {
+                        console.log(`Deleting old empty channel ${activeChannel.id} for owner ${member.id}`);
+                        await activeChannel.delete().catch(() => {});
+                    } else {
+                        console.log(`Old channel ${activeChannel.id} is still active with members. Proceeding to create new one as requested.`);
+                    }
                 }
             }
 
