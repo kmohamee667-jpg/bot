@@ -155,12 +155,16 @@ client.once('clientReady', async () => {
             .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
             .addUserOption(option => option.setName('user').setDescription('العضو (اتركه فارغاً لتصفير السيرفر)').setRequired(false)),
         new SlashCommandBuilder()
+            .setName('start')
+            .setDescription('بدء تايمر المذاكرة (Pomodoro)')
+            .addIntegerOption(option => option.setName('study_time').setDescription('وقت المذاكرة بالدقائق').setRequired(true))
+            .addIntegerOption(option => option.setName('break_time').setDescription('وقت الاستراحة بالدقائق').setRequired(true))
             .addIntegerOption(option => option.setName('cycles').setDescription('عدد الدورات').setRequired(true))
             .addStringOption(option => 
                 option.setName('theme')
                     .setDescription('اختر الثيم')
                     .setAutocomplete(true)
-                    .setRequired(false))
+                    .setRequired(false)),
     ].map(command => command.toJSON());
 
     const rest = new REST({ version: '10' }).setToken(config.token);
