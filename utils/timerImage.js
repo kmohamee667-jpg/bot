@@ -11,22 +11,22 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * @param {Object} theme - Theme configuration
  */
 export async function generateTimerImage(timeString, percentage, theme = {}) {
-    const width = 600;
-    const height = 600;
+    const width = 800; // Rectangular
+    const height = 400;
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
     const {
         backgroundPath = path.join(__dirname, '../imgs/timer_sunset.png'),
-        circleColor = '#FFD700',
+        circleColor = '#FFFFFF', // Default White
         textColor = '#FFFFFF',
-        glowColor = 'rgba(255, 215, 0, 0.6)',
-        font = 'Candara'
+        font = 'Arial' // Use standard Arial
     } = theme;
 
     // 1. Background
     try {
         const background = await loadImage(backgroundPath);
+        // Cover the whole rectangular area
         ctx.drawImage(background, 0, 0, width, height);
     } catch (e) {
         ctx.fillStyle = '#1a1a2e';
@@ -39,21 +39,19 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
 
     const centerX = width / 2;
     const centerY = height / 2;
-    const radius = 220;
+    const radius = 160; // Adjusted for 400 height
 
     // 3. Draw Static Background Circle (Track)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.lineWidth = 15;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 12;
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
     ctx.stroke();
 
-    // 4. Draw Glowing Progress Arc
+    // 4. Draw Progress Arc (White, No Glow)
     ctx.save();
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = glowColor;
     ctx.strokeStyle = circleColor;
-    ctx.lineWidth = 20;
+    ctx.lineWidth = 15;
     ctx.lineCap = 'round';
 
     const startAngle = -Math.PI / 2; // Top
@@ -64,18 +62,19 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
     ctx.stroke();
     ctx.restore();
 
-    // 5. Draw Countdown Text
+    // 5. Draw Countdown Text (Fix: Use standard font, and draw LAST to be on top)
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = textColor;
     
-    // Attempt to use theme font or fallback
-    ctx.font = `bold 120px ${font}, sans-serif`;
+    // Explicitly using Arial and providing a fail-proof string
+    ctx.font = `bold 100px Arial`;
     
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-    ctx.shadowOffsetX = 4;
-    ctx.shadowOffsetY = 4;
+    // Extra shadow for the text itself to ensure visibility
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'rgba(0, 0, 0, 1)';
+    ctx.shadowOffsetX = 3;
+    ctx.shadowOffsetY = 3;
     
     ctx.fillText(timeString, centerX, centerY);
 

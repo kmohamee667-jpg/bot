@@ -56,16 +56,18 @@ export async function generateCoinCard(username, avatarURL, balance) {
 
     // 4. "Coins" Text
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 40px sans-serif';
+    ctx.font = 'bold 40px Arial, sans-serif';
     ctx.fillText('Coins', width / 2, 270);
 
     // 5. Balance Text
     ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 80px sans-serif';
+    ctx.font = 'bold 80px Arial, sans-serif';
     
-    // Add a subtle stroke for even better visibility
+    // Add a strong stroke and shadow for maximum visibility
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'rgba(0, 0, 0, 1)';
     ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     const balanceText = balance.toLocaleString();
     ctx.strokeText(balanceText, width / 2, 350);
     ctx.fillText(balanceText, width / 2, 350);

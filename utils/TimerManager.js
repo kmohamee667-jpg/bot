@@ -13,8 +13,19 @@ class TimerManager {
         const { channel, user, guild } = interaction;
         const { studyTime, breakTime, totalCycles, themeName } = config;
 
-        // Try to find theme in DB
-        const theme = await TimerTheme.findOne({ name: themeName }) || { name: 'sunset' };
+        // Try to find theme in DB, fallback and seed if missing
+        let theme = await TimerTheme.findOne({ name: themeName });
+        if (!theme && themeName === 'sunset') {
+            theme = await TimerTheme.create({
+                name: 'sunset',
+                backgroundPath: path.join(__dirname, '../imgs/timer_sunset.png'),
+                circleColor: '#FFFFFF',
+                textColor: '#FFFFFF',
+                font: 'Arial',
+                glowColor: 'rgba(255, 255, 255, 0)'
+            });
+        }
+        theme = theme || { name: 'sunset', font: 'Arial', circleColor: '#FFFFFF', textColor: '#FFFFFF' };
 
         const session = await TimerSession.create({
             guildId: guild.id,
