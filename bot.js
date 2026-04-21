@@ -153,7 +153,14 @@ client.once('ready', async () => {
             .setName('reset-coins')
             .setDescription('تصفير رصيد عضو أو السيرفر بالكامل')
             .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
-            .addUserOption(option => option.setName('user').setDescription('العضو (اتركه فارغاً لتصفير السيرفر)').setRequired(false))
+            .addUserOption(option => option.setName('user').setDescription('العضو (اتركه فارغاً لتصفير السيرفر)').setRequired(false)),
+        new SlashCommandBuilder()
+            .setName('start')
+            .setDescription('بدء تايمر المذاكرة (Pomodoro)')
+            .addIntegerOption(option => option.setName('study_time').setDescription('وقت الدراسة (بالدقائق)').setRequired(true))
+            .addIntegerOption(option => option.setName('break_time').setDescription('وقت البريك (بالدقائق)').setRequired(true))
+            .addIntegerOption(option => option.setName('cycles').setDescription('عدد الدورات').setRequired(true))
+            .addStringOption(option => option.setName('theme').setDescription('الثيم').addChoices({ name: 'Sunset (غروب)', value: 'sunset' }).setRequired(false))
     ].map(command => command.toJSON());
 
     const rest = new REST({ version: '10' }).setToken(config.token);

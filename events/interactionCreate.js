@@ -3,6 +3,8 @@ import config from '../config/config.js';
 import PrivateVC from '../models/PrivateVC.js';
 import AdminCommand from '../models/AdminCommand.js';
 import GuildSettings from '../models/GuildSettings.js';
+import TimerSession from '../models/TimerSession.js';
+import TimerManager from '../utils/TimerManager.js';
 
 
 // Cache for administrative permissions to avoid repeated DB calls
@@ -186,6 +188,33 @@ export default async (interaction) => {
                 select.addOptions(new StringSelectMenuOptionBuilder().setLabel(member ? member.user.username : userId).setValue(userId).setEmoji('❌'));
             }
             await interaction.reply({ content: 'قائمة الموثوقين:', components: [new ActionRowBuilder().addComponents(select)], flags: [MessageFlags.Ephemeral] });
+        }
+
+        // --- VC TIMER STOP BUTTON ---
+        if (interaction.customId === 'vc_timer_stop') {
+            const session = await TimerSession.findOne({ channelId: interaction.channelId });
+            if (!session) return interaction.reply({ content: 'لا يوجد تايمر يعمل حالياً.', flags: [MessageFlags.Ephemeral] });
+
+            // Permission Check: Starter, Room Owner, or Server Owner
+            const isStarter = interaction.user.id === session.startedBy;
+            const guildOwner = interaction.guild.ownerId === interaction.user.id;
+            
+            // Fetch Room Owner from PrivateVC
+            const pvcData = await PrivateVC.findOne({ channelId: interaction.channelId });
+            const isRoomOwner = pvcData && pvcData.ownerId === interaction.user.id;
+
+            if (!isStarter && !isRoomOwner && !guildOwner) {
+                return interaction.reply({ 
+                    content: '❌ لا تملك صلاحية إيقاف هذا التاييمر (فقط صاحب الطلب أو صاحب الروم أو صاحب السيرفر يمكنهم ذلك).', 
+                    flags: [MessageFlags.Ephemeral] 
+                });
+            }
+
+            TimerManager.stopTimer(interaction.channelId);
+            session.status = 'finished';
+            await session.save();
+
+            await interaction.reply({ content: `✅ تم إيقاف التايمر بواسطة <@${interaction.user.id}>.` });
         }
     }
 
@@ -415,6 +444,9 @@ export default async (interaction) => {
         } else if (['add-coins', 'remove-coins', 'reset-coins'].includes(commandName)) {
             const { handleCoinAdminSlash } = await import('../slash-commands/coin-admin.js');
             await handleCoinAdminSlash(interaction);
+        } else if (commandName === 'start') {
+            const { handleStartTimer } = await import('../slash-commands/timer/start.js');
+            await handleStartTimer(interaction);
         }
     }
 };
