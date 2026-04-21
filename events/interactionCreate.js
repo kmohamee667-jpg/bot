@@ -30,20 +30,50 @@ export default async (interaction) => {
         return;
     }
 
-    // 2. TICKET BUTTONS (SECOND - NO EARLY RETURNS BEFORE)
-    if (interaction.isButton()) {
-        if (interaction.customId === 'ticket_create' || interaction.customId.startsWith('ticket_')) {
-            console.log('🎫 TICKET HANDLER - PRIORITY!');
-            const ticketHandlers = await import('../ticket/ticketManager.js');
-            try {
-                await ticketHandlers.handleTicketInteraction(interaction);
-            } catch (e) {
-                console.error('TICKET FATAL:', e);
-                await interaction.reply({ content: 'خطأ! Console.', ephemeral: true }).catch(() => {});
+    // 2. TICKET BUTTONS (COMPLETE HANDLER)
+    if (interaction.isButton() && (interaction.customId === 'ticket_create' || interaction.customId.startsWith('ticket_'))) {
+        console.log('🎫 TICKET PRIORITY HANDLER!');
+        const { handleCreateTicket, confirmTicketCreation, handleCloseTicket, executeCloseTicket, handleClaimTicket, handleReopenTicket, handleDeleteTicket } = await import('../ticket/ticketManager.js');
+        
+        try {
+            switch(interaction.customId) {
+                case 'ticket_create':
+                    await handleCreateTicket(interaction);
+                    break;
+                case 'ticket_confirm_yes':
+                    await confirmTicketCreation(interaction);
+                    break;
+                case 'ticket_confirm_no':
+                case 'ticket_close_confirm_no':
+                    await interaction.update({ content: 'تم إلغاء العملية ✅', components: [] });
+                    break;
+                case 'ticket_close':
+                    await handleCloseTicket(interaction);
+                    break;
+                case 'ticket_close_confirm_yes':
+                    await executeCloseTicket(interaction);
+                    break;
+                case 'ticket_claim':
+                    await handleClaimTicket(interaction);
+                    break;
+                case 'ticket_open':
+                    await handleReopenTicket(interaction);
+                    break;
+                case 'ticket_delete':
+                    await handleDeleteTicket(interaction);
+                    break;
+                default:
+                    await interaction.reply({ content: 'زر غير مدعوم', flags: [MessageFlags.Ephemeral] });
             }
-            return;
+        } catch (error) {
+            console.error('🎫 TICKET ERROR:', error);
+            try {
+                await interaction[interaction.deferred ? 'editReply' : 'reply']({ content: 'خطأ فني - Console.', flags: [MessageFlags.Ephemeral] });
+            } catch {}
         }
+        return;
     }
+
 
     // 3. VC + OTHER SYSTEMS (AFTER TICKET)
     // Check if the server is active in database
