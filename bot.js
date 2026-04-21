@@ -164,7 +164,7 @@ client.once('clientReady', async () => {
                 option.setName('theme')
                     .setDescription('اختر الثيم')
                     .setAutocomplete(true)
-                    .setRequired(false)),
+                    .setRequired(true)),
     ].map(command => command.toJSON());
 
     const rest = new REST({ version: '10' }).setToken(config.token);

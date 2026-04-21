@@ -33,7 +33,7 @@ class TimerManager {
                     motivationalText: 'KEEP GOING',
                     glowColor: 'rgba(255, 255, 255, 0)'
                 },
-                { upsert: true, new: true }
+                { upsert: true, returnDocument: 'after' }
             );
         } else if (themeName === 'focus') {
             theme = await TimerTheme.findOneAndUpdate(
@@ -47,7 +47,7 @@ class TimerManager {
                     motivationalText: 'STAY FOCUSED',
                     glowColor: 'rgba(255, 255, 255, 0)'
                 },
-                { upsert: true, new: true }
+                { upsert: true, returnDocument: 'after' }
             );
         }
         

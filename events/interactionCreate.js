@@ -1,4 +1,4 @@
-import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, PermissionFlagsBits, UserSelectMenuBuilder, MessageFlags } from 'discord.js';
+import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, PermissionFlagsBits, UserSelectMenuBuilder, MessageFlags, EmbedBuilder } from 'discord.js';
 import config from '../config/config.js';
 import PrivateVC from '../models/PrivateVC.js';
 import AdminCommand from '../models/AdminCommand.js';
