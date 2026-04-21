@@ -120,9 +120,16 @@ class TimerManager {
                     await session.save();
                 }
             } else {
-                // Initial reply or new message
-                const reply = await interaction.editReply({ embeds: [embed], files: [attachment], components: [row] });
-                session.messageId = reply.id;
+                // First time or resending after transition
+                try {
+                    // Try to edit the original interaction (works for the first ~15 mins)
+                    const reply = await interaction.editReply({ embeds: [embed], files: [attachment], components: [row] });
+                    session.messageId = reply.id;
+                } catch (err) {
+                    // Fallback to sending a new message if interaction expired
+                    const newMsg = await interaction.channel.send({ embeds: [embed], files: [attachment], components: [row] });
+                    session.messageId = newMsg.id;
+                }
                 await session.save();
             }
         } catch (err) {
@@ -141,20 +148,21 @@ class TimerManager {
         }
 
         if (session.status === 'study') {
-            // Notification: Mention everyone in VC
+            // Study ended -> Break started
             const vc = interaction.guild.channels.cache.get(session.voiceChannelId);
             const mentions = vc?.members.map(m => `<@${m.id}>`).join(' ') || '';
             
-            const studyEmbed = new EmbedBuilder()
-                .setColor('#FFFFFF')
-                .setTitle('📖 بدأت الدراسة')
-                .setDescription('>>> **انتهى وقت الراحة! حان الوقت للتركيز والعمل الجاد.** 🎯');
+            const breakStartEmbed = new EmbedBuilder()
+                .setColor('#00FF00')
+                .setTitle('☕ وقت الاستراحة')
+                .setDescription('>>> **انتهى وقت الدراسة! خذ نفساً عميقاً واستمتع بالبريك الآن.**');
 
-            await interaction.channel.send({ content: mentions, embeds: [studyEmbed] });
+            await interaction.channel.send({ content: mentions, embeds: [breakStartEmbed] });
 
             session.status = 'break';
             session.endTime = new Date(Date.now() + session.breakTime * 60000);
         } else {
+            // Break ended -> Study started
             if (session.currentCycle < session.totalCycles) {
                 session.status = 'study';
                 session.currentCycle += 1;
@@ -163,12 +171,12 @@ class TimerManager {
                 const vc = interaction.guild.channels.cache.get(session.voiceChannelId);
                 const mentions = vc?.members.map(m => `<@${m.id}>`).join(' ') || '';
 
-                const breakEndEmbed = new EmbedBuilder()
+                const studyStartEmbed = new EmbedBuilder()
                     .setColor('#FFFFFF')
                     .setTitle(`🔔 العودة للعمل (دورة ${session.currentCycle})`)
-                    .setDescription('>>> **انتهى البريك! لنعد للدراسة ونكمل ما بدأناه.** 💪');
+                    .setDescription('>>> **انتهى وقت الراحة! حان الوقت للتركيز والعمل الجاد.** 🎯');
 
-                await interaction.channel.send({ content: mentions, embeds: [breakEndEmbed] });
+                await interaction.channel.send({ content: mentions, embeds: [studyStartEmbed] });
             } else {
                 session.status = 'finished';
                 const finishEmbed = new EmbedBuilder()
