@@ -36,7 +36,7 @@ export async function handleCoinAdminSlash(interaction) {
                 .setTitle('🪙 تعديل رصيد الكوينات')
                 .setThumbnail(target.displayAvatarURL({ dynamic: true }))
                 .setColor(Colors.Green)
-                .setDescription(`>>> **تـــم إضافة كوينات بنجاح**\n\n**العضو:** <@${target.id}>\n**المبلغ:** \`+${amount}\`\n**الحالة:** \`${oldBalance}\` ➔ \`${coinData.balance}\``)
+                .setDescription(`>>> **تـــم إضافة كوينات بنجاح**\n\n**العضو:** <@${target.id}>\n**المبلغ:** \`+${amount}\`\n**الحالة:** \`${coinData.balance}\` ⬅️ \`${oldBalance}\``)
                 .setTimestamp();
 
             await interaction.editReply({ content: `<@${target.id}>`, embeds: [replyEmbed] });
@@ -57,7 +57,7 @@ export async function handleCoinAdminSlash(interaction) {
                     .setAuthor({ name: `إضافة كوينات | ${target.username}`, iconURL: author.displayAvatarURL() })
                     .setColor(Colors.Green)
                     .setThumbnail(target.displayAvatarURL({ dynamic: true }))
-                    .setDescription(`>>> **عملية إضافة كوينات**\n\n**المستلم:** <@${target.id}>\n**بواسطة:** <@${author.id}>\n**المبلغ:** \`+${amount}\`\n**الحالة:** \`${oldBalance}\` ➔ \`${coinData.balance}\``)
+                    .setDescription(`>>> **عملية إضافة كوينات**\n\n**المستلم:** <@${target.id}>\n**بواسطة:** <@${author.id}>\n**المبلغ:** \`+${amount}\`\n**الحالة:** \`${coinData.balance}\` ⬅️ \`${oldBalance}\``)
                     .setTimestamp();
                 await logChannel.send({ embeds: [logEmbed] });
             }
@@ -82,7 +82,7 @@ export async function handleCoinAdminSlash(interaction) {
                 .setTitle('🪙 تعديل رصيد الكوينات')
                 .setThumbnail(target.displayAvatarURL({ dynamic: true }))
                 .setColor(Colors.Red)
-                .setDescription(`>>> **تـــم خصم كوينات بنجاح**\n\n**العضو:** <@${target.id}>\n**المبلغ المخصوم:** \`-${amount}\`\n**الحالة:** \`${oldBalance}\` ➔ \`${coinData.balance}\``)
+                .setDescription(`>>> **تـــم خصم كوينات بنجاح**\n\n**العضو:** <@${target.id}>\n**المبلغ المخصوم:** \`-${amount}\`\n**الحالة:** \`${coinData.balance}\` ⬅️ \`${oldBalance}\``)
                 .setTimestamp();
 
             await interaction.editReply({ content: `<@${target.id}>`, embeds: [replyEmbed] });
@@ -103,7 +103,7 @@ export async function handleCoinAdminSlash(interaction) {
                     .setAuthor({ name: `خصم كوينات | ${target.username}`, iconURL: author.displayAvatarURL() })
                     .setColor(Colors.Red)
                     .setThumbnail(target.displayAvatarURL({ dynamic: true }))
-                    .setDescription(`>>> **عملية خصم كوينات**\n\n**العضو:** <@${target.id}>\n**بواسطة:** <@${author.id}>\n**المبلغ:** \`-${amount}\`\n**الحالة:** \`${oldBalance}\` ➔ \`${coinData.balance}\``)
+                    .setDescription(`>>> **عملية خصم كوينات**\n\n**العضو:** <@${target.id}>\n**بواسطة:** <@${author.id}>\n**المبلغ:** \`-${amount}\`\n**الحالة:** \`${coinData.balance}\` ⬅️ \`${oldBalance}\``)
                     .setTimestamp();
                 await logChannel.send({ embeds: [logEmbed] });
             }
@@ -125,7 +125,7 @@ export async function handleCoinAdminSlash(interaction) {
                     .setTitle('🪙 تصفير رصيد الكوينات')
                     .setThumbnail(target.displayAvatarURL({ dynamic: true }))
                     .setColor(Colors.Black)
-                    .setDescription(`>>> **تـــم تصفير رصيد العضو**\n\n**العضو:** <@${target.id}>\n**الحالة:** \`${oldBalance}\` ➔ \`0\``)
+                    .setDescription(`>>> **تـــم تصفير رصيد العضو**\n\n**العضو:** <@${target.id}>\n**الحالة:** \`0\` ⬅️ \`${oldBalance}\``)
                     .setTimestamp();
 
                 await interaction.editReply({ content: `<@${target.id}>`, embeds: [replyEmbed] });
@@ -136,7 +136,7 @@ export async function handleCoinAdminSlash(interaction) {
                         .setAuthor({ name: `تصفير كوينات | ${target.username}`, iconURL: author.displayAvatarURL() })
                         .setColor(Colors.Black)
                         .setThumbnail(target.displayAvatarURL({ dynamic: true }))
-                        .setDescription(`>>> **عملية تصفير رصيد**\n\n**العضو:** <@${target.id}>\n**بواسطة:** <@${author.id}>\n**الحالة:** \`${oldBalance}\` ➔ \`0\``)
+                        .setDescription(`>>> **عملية تصفير رصيد**\n\n**العضو:** <@${target.id}>\n**بواسطة:** <@${author.id}>\n**الحالة:** \`0\` ⬅️ \`${oldBalance}\``)
                         .setTimestamp();
                     await logChannel.send({ embeds: [logEmbed] });
                 }
