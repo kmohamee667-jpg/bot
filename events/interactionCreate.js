@@ -95,7 +95,10 @@ export default async (interaction) => {
                     new StringSelectMenuOptionBuilder().setLabel('إخفاء الروم').setValue('privacy_hide').setEmoji('👻'),
                     new StringSelectMenuOptionBuilder().setLabel('إظهار الروم').setValue('privacy_show').setEmoji('👁️'),
                     new StringSelectMenuOptionBuilder().setLabel('شات عام').setValue('privacy_chat_public').setEmoji('💬'),
-                    new StringSelectMenuOptionBuilder().setLabel('شات خاص').setValue('privacy_chat_private').setEmoji('📵')
+                    new StringSelectMenuOptionBuilder().setLabel('شات خاص').setValue('privacy_chat_private').setEmoji('📵'),
+                    new StringSelectMenuOptionBuilder().setLabel('تظهر للبنات بس').setValue('privacy_female').setEmoji('👩'),
+                    new StringSelectMenuOptionBuilder().setLabel('تظهر للولاد بس').setValue('privacy_male').setEmoji('👨'),
+                    new StringSelectMenuOptionBuilder().setLabel('تظهر للولاد والبنات').setValue('privacy_all').setEmoji('👥')
                 );
             await interaction.reply({ content: 'إعدادات الخصوصية:', components: [new ActionRowBuilder().addComponents(select)], flags: [MessageFlags.Ephemeral] });
         }
@@ -201,6 +204,36 @@ export default async (interaction) => {
             if (selection === 'privacy_chat_private') {
                 await channel.permissionOverwrites.edit(everyone, { SendMessages: false, ReadMessageHistory: false });
                 return interaction.update({ content: 'تم قفل الشات! 📵', components: [] });
+            }
+
+            // New gender privacy options
+            if (selection === 'privacy_all') {
+                await channel.permissionOverwrites.edit(everyone, { ViewChannel: true });
+                vcData.privacyMode = 'all';
+                await vcData.save();
+                return interaction.update({ content: 'تم تعيين الروم لتظهر للكل! 👥', components: [] });
+            }
+
+            if (selection === 'privacy_female') {
+                const femaleRole = interaction.guild.roles.cache.find(r => r.name === 'female' || r.name === 'بنات');
+                await channel.permissionOverwrites.edit(everyone, { ViewChannel: false });
+                if (femaleRole) {
+                    await channel.permissionOverwrites.edit(femaleRole.id, { ViewChannel: true });
+                }
+                vcData.privacyMode = 'female';
+                await vcData.save();
+                return interaction.update({ content: 'تم تعيين الروم لتظهر للبنات فقط! 👩', components: [] });
+            }
+
+            if (selection === 'privacy_male') {
+                const maleRole = interaction.guild.roles.cache.find(r => r.name === 'male' || r.name === 'ولاد');
+                await channel.permissionOverwrites.edit(everyone, { ViewChannel: false });
+                if (maleRole) {
+                    await channel.permissionOverwrites.edit(maleRole.id, { ViewChannel: true });
+                }
+                vcData.privacyMode = 'male';
+                await vcData.save();
+                return interaction.update({ content: 'تم تعيين الروم لتظهر للولاد فقط! 👨', components: [] });
             }
         }
 

@@ -9,7 +9,8 @@ const PrivateVCSchema = new mongoose.Schema({
     trustedUsers: [{ type: String }],
     blockedUsers: [{ type: String }],
     isLocked: { type: Boolean, default: false },
-    isHidden: { type: Boolean, default: false }
+    isHidden: { type: Boolean, default: false },
+    privacyMode: { type: String, enum: ['all', 'female', 'male'], default: 'all' }
 });
 
 export default mongoose.model('PrivateVC', PrivateVCSchema);

@@ -71,8 +71,8 @@ export default async (oldState, newState) => {
                 permissionOverwrites: [
                     {
                         id: guild.id, // @everyone
-                        allow: vcData?.isHidden ? [] : ['ViewChannel'],
-                        deny: (vcData?.isHidden ? ['ViewChannel'] : []).concat(vcData?.isLocked ? ['Connect'] : [])
+                        allow: [],
+                        deny: ['ViewChannel']
                     },
                     {
                         id: member.id, // The creator
@@ -80,6 +80,29 @@ export default async (oldState, newState) => {
                     },
                 ],
             });
+
+            // Apply privacyMode permissions
+            if (vcData?.privacyMode === 'all') {
+                await newChannel.permissionOverwrites.edit(guild.id, { ViewChannel: true });
+            } else if (vcData?.privacyMode === 'female') {
+                const femaleRole = guild.roles.cache.find(r => r.name === 'female' || r.name === 'بنات');
+                if (femaleRole) {
+                    await newChannel.permissionOverwrites.edit(femaleRole.id, { ViewChannel: true });
+                }
+            } else if (vcData?.privacyMode === 'male') {
+                const maleRole = guild.roles.cache.find(r => r.name === 'male' || r.name === 'ولاد');
+                if (maleRole) {
+                    await newChannel.permissionOverwrites.edit(maleRole.id, { ViewChannel: true });
+                }
+            }
+
+            // Apply lock/hide
+            if (vcData?.isHidden) {
+                await newChannel.permissionOverwrites.edit(guild.id, { ViewChannel: false });
+            }
+            if (vcData?.isLocked) {
+                await newChannel.permissionOverwrites.edit(guild.id, { Connect: false });
+            }
 
             console.log(`New channel created: ${newChannel.id}`);
             console.log('✅ تم انشاء قناه خاصه');
@@ -106,7 +129,10 @@ export default async (oldState, newState) => {
                     name: channelName,
                     limit: userLimit,
                     trustedUsers: [],
-                    blockedUsers: []
+                    blockedUsers: [],
+                    privacyMode: 'all',
+                    isLocked: false,
+                    isHidden: false
                 });
             }
 
@@ -117,9 +143,20 @@ export default async (oldState, newState) => {
             const exists = guild.channels.cache.has(newChannel.id);
             if (!exists) return;
 
+            const privacyText = vcData ? {
+                all: 'تظهر للولاد والبنات 👥',
+                female: 'تظهر للبنات بس 👩',
+                male: 'تظهر للولاد بس 👨'
+            }[vcData.privacyMode] || 'تظهر للكل 👥' : 'تظهر للكل 👥';
+
+            const limitText = vcData?.limit === 0 ? 'مفتوح 👥' : `${vcData.limit} عضو`;
+
+            const lockText = vcData?.isLocked ? 'مقفول 🔒' : 'مفتوح 🔓';
+            const hideText = vcData?.isHidden ? 'مخفي 👻' : 'ظاهر 👁️';
+
             const embed = new EmbedBuilder()
                 .setTitle('👑 لوحة تحكم الغرفة الملكية')
-                .setDescription('مرحباً بك مجدداً! تم استعادة إعدادات غرفتك السابقة تلقائياً. تحكم في مملكتك من هنا.')
+                .setDescription(`مرحباً بك مجدداً! تم استعادة إعدادات غرفتك السابقة تلقائياً.\n\n**الإعدادات الحالية:**\n• **الاسم**: ${channelName}\n• **العدد**: ${limitText}\n• **الخصوصية**: ${privacyText}\n• **القفل**: ${lockText}\n• **الإخفاء**: ${hideText}`)
                 .setColor('#FFD700')
                 .setImage('https://bot-production-5d5b.up.railway.app/bg.png');
 
