@@ -102,8 +102,8 @@ class TimerManager {
                 { name: '⚙️ الحالة', value: session.status === 'study' ? '📖 دراسة بتركيز' : '☕ استراحة قصيرة', inline: false }
             )
             .setImage('attachment://timer.png')
-            .setColor('#00FF00') // Solid Green
-            .setFooter({ text: `تحديث كل 10 ثوانٍ • فكر في هدفك!` });
+            .setColor('#FFFFFF') 
+            .setFooter({ text: `༺ مِـنْ أَثَـرِ الرَّاحَةِ فَاتَتْهُ الرَّاحَةُ ༻` });
 
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId('vc_timer_stop').setLabel('إغلاق التايمر').setStyle(ButtonStyle.Danger)
@@ -144,7 +144,13 @@ class TimerManager {
             // Notification: Mention everyone in VC
             const vc = interaction.guild.channels.cache.get(session.voiceChannelId);
             const mentions = vc?.members.map(m => `<@${m.id}>`).join(' ') || '';
-            await interaction.channel.send(`${mentions} \n📢 **انتهى وقت الدراسة! بدأ وقت البريك الآن.** ☕`);
+            
+            const studyEmbed = new EmbedBuilder()
+                .setColor('#FFFFFF')
+                .setTitle('📖 بدأت الدراسة')
+                .setDescription('>>> **انتهى وقت الراحة! حان الوقت للتركيز والعمل الجاد.** 🎯');
+
+            await interaction.channel.send({ content: mentions, embeds: [studyEmbed] });
 
             session.status = 'break';
             session.endTime = new Date(Date.now() + session.breakTime * 60000);
@@ -153,14 +159,34 @@ class TimerManager {
                 session.status = 'study';
                 session.currentCycle += 1;
                 session.endTime = new Date(Date.now() + session.studyTime * 60000);
-                await interaction.channel.send(`🔔 **انتهى البريك! لنعد للدراسة (دورة ${session.currentCycle}).** 📖`);
+                
+                const vc = interaction.guild.channels.cache.get(session.voiceChannelId);
+                const mentions = vc?.members.map(m => `<@${m.id}>`).join(' ') || '';
+
+                const breakEndEmbed = new EmbedBuilder()
+                    .setColor('#FFFFFF')
+                    .setTitle(`🔔 العودة للعمل (دورة ${session.currentCycle})`)
+                    .setDescription('>>> **انتهى البريك! لنعد للدراسة ونكمل ما بدأناه.** 💪');
+
+                await interaction.channel.send({ content: mentions, embeds: [breakEndEmbed] });
             } else {
                 session.status = 'finished';
-                await interaction.channel.send(`🎉 **مبروك! أكملت جميع الدورات بنجاح.**`);
+                const finishEmbed = new EmbedBuilder()
+                    .setColor('#00FF00')
+                    .setTitle('🎉 مبروك!')
+                    .setDescription('>>> **لقد أكملت جميع دورات المذاكرة بنجاح. استمتع بوقتك الآن!**');
+
+                await interaction.channel.send({ embeds: [finishEmbed] });
                 this.stopTimer(session.channelId);
             }
         }
         await session.save();
+
+        // Send the new timer message immediately
+        if (session.status !== 'finished') {
+            const newRemaining = session.endTime - Date.now();
+            await this.updateMessage(interaction, session, theme, newRemaining);
+        }
     }
 
     stopTimer(channelId) {

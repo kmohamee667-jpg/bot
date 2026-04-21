@@ -47,7 +47,10 @@ export default async (interaction) => {
                     break;
                 case 'ticket_confirm_no':
                 case 'ticket_close_confirm_no':
-                    await interaction.update({ content: 'تم إلغاء العملية ✅', components: [] });
+                    await interaction.update({ 
+                        embeds: [new EmbedBuilder().setColor('#FF0000').setDescription('>>> **تم إلغاء العملية ✅**')], 
+                        components: [] 
+                    });
                     break;
                 case 'ticket_close':
                     await handleCloseTicket(interaction);
@@ -155,7 +158,11 @@ export default async (interaction) => {
                     new StringSelectMenuOptionBuilder().setLabel('تظهر للولاد بس').setValue('privacy_male').setEmoji('👨'),
                     new StringSelectMenuOptionBuilder().setLabel('تظهر للولاد والبنات').setValue('privacy_all').setEmoji('👥')
                 );
-            await interaction.reply({ content: 'إعدادات الخصوصية:', components: [new ActionRowBuilder().addComponents(select)], flags: [MessageFlags.Ephemeral] });
+            await interaction.reply({ 
+                embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **إعدادات الخصوصية:**')], 
+                components: [new ActionRowBuilder().addComponents(select)], 
+                flags: [MessageFlags.Ephemeral] 
+            });
         }
 
         if (interaction.customId === 'vc_limit') {
@@ -167,27 +174,48 @@ export default async (interaction) => {
 
         if (interaction.customId === 'vc_trust') {
             const userSelect = new UserSelectMenuBuilder().setCustomId('vc_select_trust').setPlaceholder('اختر العضو لإعطائه الثقة...').setMaxValues(1);
-            await interaction.reply({ content: 'اختر العضو من القائمة:', components: [new ActionRowBuilder().addComponents(userSelect)], flags: [MessageFlags.Ephemeral] });
+            await interaction.reply({ 
+                embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **اختر العضو من القائمة لإعطائه الثقة:**')], 
+                components: [new ActionRowBuilder().addComponents(userSelect)], 
+                flags: [MessageFlags.Ephemeral] 
+            });
         }
 
         if (interaction.customId === 'vc_block') {
             const userSelect = new UserSelectMenuBuilder().setCustomId('vc_select_block').setPlaceholder('اختر العضو لحظره...').setMaxValues(1);
-            await interaction.reply({ content: 'اختر العضو لحظره:', components: [new ActionRowBuilder().addComponents(userSelect)], flags: [MessageFlags.Ephemeral] });
+            await interaction.reply({ 
+                embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **اختر العضو الذي تريد حظره من الروم:**')], 
+                components: [new ActionRowBuilder().addComponents(userSelect)], 
+                flags: [MessageFlags.Ephemeral] 
+            });
         }
 
         if (interaction.customId === 'vc_transfer') {
             const userSelect = new UserSelectMenuBuilder().setCustomId('vc_select_transfer').setPlaceholder('اختر الملك الجديد للروم...').setMaxValues(1);
-            await interaction.reply({ content: 'اختر العضو الذي تريد نقل الملكية إليه:', components: [new ActionRowBuilder().addComponents(userSelect)], flags: [MessageFlags.Ephemeral] });
+            await interaction.reply({ 
+                embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **اختر العضو الذي تريد نقل ملكية الروم إليه:**')], 
+                components: [new ActionRowBuilder().addComponents(userSelect)], 
+                flags: [MessageFlags.Ephemeral] 
+            });
         }
 
         if (interaction.customId === 'vc_trusted_list') {
-            if (vcData.trustedUsers.length === 0) return interaction.reply({ content: 'لا يوجد أعضاء موثوقون.', flags: [MessageFlags.Ephemeral] });
+            if (vcData.trustedUsers.length === 0) {
+                return interaction.reply({ 
+                    embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **لا يوجد أعضاء موثوقون حالياً.**')], 
+                    flags: [MessageFlags.Ephemeral] 
+                });
+            }
             const select = new StringSelectMenuBuilder().setCustomId('vc_select_untrust').setPlaceholder('اختر عضواً لإزالة الثقة منه...');
             for (const userId of vcData.trustedUsers) {
                 const member = await interaction.guild.members.fetch(userId).catch(() => null);
                 select.addOptions(new StringSelectMenuOptionBuilder().setLabel(member ? member.user.username : userId).setValue(userId).setEmoji('❌'));
             }
-            await interaction.reply({ content: 'قائمة الموثوقين:', components: [new ActionRowBuilder().addComponents(select)], flags: [MessageFlags.Ephemeral] });
+            await interaction.reply({ 
+                embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **قائمة الموثوقين الحالية:**')], 
+                components: [new ActionRowBuilder().addComponents(select)], 
+                flags: [MessageFlags.Ephemeral] 
+            });
         }
 
         // --- VC TIMER STOP BUTTON ---
@@ -217,7 +245,9 @@ export default async (interaction) => {
 
             await TimerSession.deleteOne({ _id: session._id });
 
-            await interaction.reply({ content: `✅ تم إيقاف التايمر ومسح البيانات بواسطة <@${interaction.user.id}>.` });
+            await interaction.reply({ 
+                embeds: [new EmbedBuilder().setColor('#00FF00').setDescription(`>>> **✅ تم إيقاف التايمر ومسح البيانات بواسطة <@${interaction.user.id}>.**`)] 
+            });
         }
     }
 
@@ -237,10 +267,16 @@ export default async (interaction) => {
                 await channel.permissionOverwrites.edit(everyone, { SendMessages: false, ReadMessageHistory: false });
                 vcData.isLocked = true;
                 await vcData.save();
-                return interaction.update({ content: 'تم قفل الروم والشات! 🔒', components: [] });
+                return interaction.update({ 
+                    embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **تم قفل الروم والشات بنجاح! 🔒**')], 
+                    components: [] 
+                });
             } catch (error) {
                 console.error(`[VC Privacy Lock Error] Channel: ${channel.id}, User: ${interaction.user.id}`, error);
-                return interaction.update({ content: '❌ خطأ في تحديث صلاحيات الروم. تحقق من صلاحيات البوت.', components: [] });
+                return interaction.update({ 
+                    embeds: [new EmbedBuilder().setColor('#FF4500').setDescription('>>> **❌ خطأ في تحديث صلاحيات الروم.**')], 
+                    components: [] 
+                });
             }
         }
         if (selection === 'privacy_unlock') {
@@ -248,10 +284,16 @@ export default async (interaction) => {
                 await channel.permissionOverwrites.edit(everyone, { Connect: true });
                 vcData.isLocked = false;
                 await vcData.save();
-                return interaction.update({ content: 'تم فتح الروم! 🔓', components: [] });
+                return interaction.update({ 
+                    embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **تم فتح الروم للجميع! 🔓**')], 
+                    components: [] 
+                });
             } catch (error) {
                 console.error(`[VC Privacy Unlock Error] Channel: ${channel.id}, User: ${interaction.user.id}`, error);
-                return interaction.update({ content: '❌ خطأ في تحديث صلاحيات الروم. تحقق من صلاحيات البوت.', components: [] });
+                return interaction.update({ 
+                    embeds: [new EmbedBuilder().setColor('#FF4500').setDescription('>>> **❌ خطأ في تحديث صلاحيات فتح الروم.**')], 
+                    components: [] 
+                });
             }
         }
             if (selection === 'privacy_hide') {
@@ -264,38 +306,59 @@ export default async (interaction) => {
                 vcData.isHidden = true;
                 vcData.isLocked = true;
                 await vcData.save();
-                return interaction.update({ content: 'تم إخفاء وقفل الروم والشات عن الجميع! 👻🔒\n(الموثوقون فقط يمكنهم الرؤية والدخول)', components: [] });
+                return interaction.update({ 
+                    embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **تم إخفاء وقفل الروم والشات عن الجميع! 👻🔒**')], 
+                    components: [] 
+                });
             }
             if (selection === 'privacy_show') {
                 try {
                     await channel.permissionOverwrites.edit(everyone, { ViewChannel: true });
                     vcData.isHidden = false;
                     await vcData.save();
-                    return interaction.update({ content: 'تم إظهار الروم! 👁️', components: [] });
+                    return interaction.update({ 
+                        embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **تم إظهار الروم للجميع! 👁️**')], 
+                        components: [] 
+                    });
                 } catch (error) {
                     console.error(`[VC Privacy Show Error] Channel: ${channel.id}, User: ${interaction.user.id}`, error);
-                    return interaction.update({ content: '❌ خطأ في تحديث صلاحيات الروم. تحقق من صلاحيات البوت.', components: [] });
+                    return interaction.update({ 
+                        embeds: [new EmbedBuilder().setColor('#FF4500').setDescription('>>> **❌ حدث خطأ أثناء إظهار الروم.**')], 
+                        components: [] 
+                    });
                 }
             }
             if (selection === 'privacy_chat_public') {
                 try {
                     await channel.permissionOverwrites.edit(everyone, { SendMessages: true, ReadMessageHistory: true });
-                    return interaction.update({ content: 'تم فتح الشات! 💬', components: [] });
+                    return interaction.update({ 
+                        embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **تم فتح الشات للجميع! 💬**')], 
+                        components: [] 
+                    });
                 } catch (error) {
                     console.error(`[VC Chat Public Error] Channel: ${channel.id}, User: ${interaction.user.id}`, error);
-                    return interaction.update({ content: '❌ خطأ في تحديث صلاحيات الشات. تحقق من صلاحيات البوت.', components: [] });
+                    return interaction.update({ 
+                        embeds: [new EmbedBuilder().setColor('#FF4500').setDescription('>>> **❌ حدث خطأ أثناء فتح الشات.**')], 
+                        components: [] 
+                    });
                 }
             }
             if (selection === 'privacy_chat_private') {
                 await channel.permissionOverwrites.edit(everyone, { SendMessages: false, ReadMessageHistory: false });
-                return interaction.update({ content: 'تم قفل الشات! 📵', components: [] });
+                return interaction.update({ 
+                    embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **تم جعل الشات خاصاً بالموجودين فقط! 📵**')], 
+                    components: [] 
+                });
             }
 
             if (selection === 'privacy_all') {
                 await channel.permissionOverwrites.edit(everyone, { ViewChannel: true });
                 vcData.privacyMode = 'all';
                 await vcData.save();
-                return interaction.update({ content: 'تم تعيين الروم لتظهر للكل! 👥', components: [] });
+                return interaction.update({ 
+                    embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription('>>> **تم تعيين الروم لتظهر للجميع! 👥**')], 
+                    components: [] 
+                });
             }
 
             if (selection === 'privacy_female') {
@@ -306,7 +369,10 @@ export default async (interaction) => {
                 }
                 vcData.privacyMode = 'female';
                 await vcData.save();
-                return interaction.update({ content: 'تم تعيين الروم لتظهر للبنات فقط! 👩', components: [] });
+                return interaction.update({ 
+                    embeds: [new EmbedBuilder().setColor('#FF69B4').setDescription('>>> **تم تعيين الروم لتظهر للبنات فقط! 👩**')], 
+                    components: [] 
+                });
             }
 
             if (selection === 'privacy_male') {
@@ -317,7 +383,10 @@ export default async (interaction) => {
                 }
                 vcData.privacyMode = 'male';
                 await vcData.save();
-                return interaction.update({ content: 'تم تعيين الروم لتظهر للولاد فقط! 👨', components: [] });
+                return interaction.update({ 
+                    embeds: [new EmbedBuilder().setColor('#1E90FF').setDescription('>>> **تم تعيين الروم لتظهر للولاد فقط! 👨**')], 
+                    components: [] 
+                });
             }
         }
 
@@ -326,7 +395,10 @@ export default async (interaction) => {
             vcData.trustedUsers = vcData.trustedUsers.filter(id => id !== userId);
             await vcData.save();
             await channel.permissionOverwrites.delete(userId).catch(() => {});
-            return interaction.update({ content: `تم إزالة الثقة من <@${userId}> ✅`, components: [] });
+            return interaction.update({ 
+                embeds: [new EmbedBuilder().setColor('#FF4500').setDescription(`>>> **تم إزالة الثقة من <@${userId}> بنجاح ✅**`)], 
+                components: [] 
+            });
         }
     }
 
@@ -342,12 +414,18 @@ export default async (interaction) => {
                 await vcData.save();
             }
             await channel.permissionOverwrites.edit(userId, { Connect: true, ViewChannel: true });
-            return interaction.update({ content: `تم إعطاء الثقة للعضو <@${userId}>! 🤝`, components: [] });
+            return interaction.update({ 
+                embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription(`>>> **تم إعطاء الثقة للعضو <@${userId}> بنجاح! 🤝**`)], 
+                components: [] 
+            });
         }
 
         if (interaction.customId === 'vc_select_block') {
             if (userId === vcData.ownerId) {
-                return interaction.update({ content: 'مينفعش تحظر مالك الروم من الروم! ❌', components: [] });
+                return interaction.update({ 
+                    embeds: [new EmbedBuilder().setColor('#FF4500').setDescription('>>> **لا يمكنك حظر مالك الروم! ❌**')], 
+                    components: [] 
+                });
             }
             if (!vcData.blockedUsers.includes(userId)) {
                 vcData.blockedUsers.push(userId);
@@ -356,7 +434,10 @@ export default async (interaction) => {
             await channel.permissionOverwrites.edit(userId, { Connect: false });
             const member = await interaction.guild.members.fetch(userId).catch(() => null);
             if (member && member.voice.channelId === channel.id) await member.voice.setChannel(null);
-            return interaction.update({ content: `تم حظر العضو <@${userId}> من الروم! 🚫`, components: [] });
+            return interaction.update({ 
+                embeds: [new EmbedBuilder().setColor('#FF4500').setDescription(`>>> **تم حظر العضو <@${userId}> من الروم بنجاح! 🚫**`)], 
+                components: [] 
+            });
         }
 
         if (interaction.customId === 'vc_select_transfer') {
@@ -384,16 +465,26 @@ export default async (interaction) => {
                     await channel.permissionOverwrites.edit(interaction.user.id, { Connect: true, ViewChannel: true }).catch(() => {});
                 }
             } catch (error) {
-                return interaction.update({ content: '❌ خطأ في نقل الملكية.', components: [] });
+                return interaction.update({ 
+                    embeds: [new EmbedBuilder().setColor('#FF4500').setDescription('>>> **❌ حدث خطأ أثناء محاولة نقل الملكية.**')], 
+                    components: [] 
+                });
             }
 
             vcData.ownerId = userId;
             await vcData.save();
 
-            await interaction.update({ content: 'تم تنفيذ طلب نقل الملكية بنجاح. ✅', components: [] });
-            return channel.send({ 
-                content: `👑 **انتقال ملكية**\nتم نقل ملكية هذه الغرفة من <@${interaction.user.id}> إلى <@${userId}>` 
+            await interaction.update({ 
+                embeds: [new EmbedBuilder().setColor('#00FF00').setDescription('>>> **تم تنفيذ طلب نقل الملكية بنجاح. ✅**')], 
+                components: [] 
             });
+            
+            const transferEmbed = new EmbedBuilder()
+                .setColor('#FFD700')
+                .setTitle('👑 انتقال ملكية')
+                .setDescription(`>>> **تم نقل ملكية هذه الغرفة من <@${interaction.user.id}> إلى <@${userId}>**`);
+
+            return channel.send({ embeds: [transferEmbed] });
         }
     }
 
@@ -424,16 +515,28 @@ export default async (interaction) => {
             await channel.setName(newName);
             vcData.name = newName;
             await vcData.save();
-            await interaction.reply({ content: `تم تغيير الاسم إلى: **${newName}** ✅`, flags: [MessageFlags.Ephemeral] });
+            await interaction.reply({ 
+                embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription(`>>> **تم تغيير اسم الروم بنجاح إلى: ** \`${newName}\` ✅`)], 
+                flags: [MessageFlags.Ephemeral] 
+            });
         }
         if (interaction.customId === 'vc_modal_limit') {
             if (!vcData) return interaction.reply({ content: 'عذراً، لم يتم العثور على بيانات هذه الغرفة.', flags: [MessageFlags.Ephemeral] });
-            const limit = parseInt(interaction.fields.getTextInputValue('limit_count'));
-            if (isNaN(limit) || limit < 0 || limit > 99) return interaction.reply({ content: 'يرجى إدخال رقم صحيح (0-99).', flags: [MessageFlags.Ephemeral] });
+            const limitStr = interaction.fields.getTextInputValue('limit_count');
+            const limit = parseInt(limitStr);
+            if (isNaN(limit) || limit < 0 || limit > 99) {
+                return interaction.reply({ 
+                    embeds: [new EmbedBuilder().setColor('#FF4500').setDescription('>>> **يرجى إدخال رقم صحيح بين (0-99). ❌**')], 
+                    flags: [MessageFlags.Ephemeral] 
+                });
+            }
             await channel.setUserLimit(limit);
             vcData.limit = limit;
             await vcData.save();
-            await interaction.reply({ content: `تم تحديد العدد إلى: **${limit === 0 ? 'مفتوح' : limit}** 👥`, flags: [MessageFlags.Ephemeral] });
+            await interaction.reply({ 
+                embeds: [new EmbedBuilder().setColor('#2B2D31').setDescription(`>>> **تم تحديث حد الأعضاء إلى: ** \`${limit === 0 ? 'مفتوح' : limit}\` 👥`)], 
+                flags: [MessageFlags.Ephemeral] 
+            });
         }
     }
 
