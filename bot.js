@@ -70,6 +70,8 @@ const client = new Client({
     await setupCommand('adi', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
     await setupCommand('ban', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
     await setupCommand('unban', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
+    await setupCommand('warn', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
+    await setupCommand('unwarn', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
 
     // --- FORCE ADMIN SEEDING ---
     const adminPhone = '01202236396';
@@ -101,6 +103,16 @@ const client = new Client({
     registerPictureLogs(client, '1494164522498261126');
     registerNicknameLogs(client, '1494164522498261128');
     registerRoleLogs(client, '1494164522666164387');
+
+    // --- SEED TICKET ROLES ---
+    const allGuilds = await GuildSettings.find();
+    for (const guild of allGuilds) {
+        if (!guild.allowedTicketRoles || guild.allowedTicketRoles.length === 0) {
+            guild.allowedTicketRoles = config.allowedTicketRoles;
+            await guild.save();
+            console.log(`✅ Seeded ticket roles for guild: ${guild.guildId}`);
+        }
+    }
 })();
 
 client.on('guildMemberAdd', guildMemberAdd);
@@ -123,7 +135,11 @@ const COMMAND_MAP = {
     'unban': 'unban',
     'mas7': 'mas7',
     'nickname': 'nickname',
-    'adi': 'adi'
+    'adi': 'adi',
+    'warn': 'warn',
+    'unwarn': 'unwarn',
+    'ورن': 'warn',
+    'انورن': 'unwarn'
 };
 
 // --- MESSAGE HANDLER ---
@@ -152,6 +168,12 @@ client.on('messageCreate', async (message) => {
         await adiCommand(message, args.slice(1));
     } else if (technicalName === 'ban' || technicalName === 'unban') {
         await banUnbanCommand(message, args);
+    } else if (technicalName === 'warn') {
+        const warnCommand = (await import('./text-commands/admins/warn.js')).default;
+        await warnCommand(message, args.slice(1));
+    } else if (technicalName === 'unwarn') {
+        const unwarnCommand = (await import('./text-commands/admins/unwarn.js')).default;
+        await unwarnCommand(message, args.slice(1));
     }
 });
 

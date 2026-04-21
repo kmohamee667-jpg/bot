@@ -21,7 +21,7 @@ export const initTicketSystem = async (client, config) => {
         );
 
         const embed = new EmbedBuilder()
-            .setTitle('🎫 عاوز تقدم شكوى؟')
+            .setTitle('🎫 عاوز تتواصل مع الإداره ؟')
             .setColor('Blurple')
             .setTimestamp();
 

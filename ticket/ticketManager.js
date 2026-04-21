@@ -12,10 +12,17 @@ import { initTicketSystem } from './initTicketSystem.js';
 import config from '../config/config.js';
 import { createTicketRow, userCloseRow, closeConfirmRow, closeConfirmRowClose, ticketControlsRow, supportControlsRow, closedEmbed, claimPromptRow, claimPromptEmbed, claimedInTicketEmbed, claimedInClaimChannelEmbed, ticketClosedDMEmbed } from './buttonsHandler.js';
 import { getNextTicketId, createTicket, getUserOpenTicket, getTicketByChannelId, updateTicketStatus, claimTicket, updateClaimPromptMessageId } from './database.js';
+import GuildSettings from '../models/GuildSettings.js';
 
 export { initTicketSystem };
 
-const allowedRoles = config.allowedTicketRoles;
+// Helper to get allowed roles from DB
+const getAllowedRoles = async (guildId) => {
+    const settings = await GuildSettings.findOne({ guildId });
+    return settings?.allowedTicketRoles && settings.allowedTicketRoles.length > 0 
+        ? settings.allowedTicketRoles 
+        : config.allowedTicketRoles;
+};
 
 export const handleCreateTicket = async (interaction) => {
     await sendStructuredLog(interaction.guild, 'create_start', { userId: interaction.user.id, details: `User: ${interaction.user.tag}` });
@@ -91,7 +98,7 @@ export const confirmTicketCreation = async (interaction) => {
                 allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory]
             },
             // Management initially CANNOT see the ticket
-            ...allowedRoles.map(roleId => ({
+            ...(await getAllowedRoles(guildId)).map(roleId => ({
                 id: roleId,
                 deny: [PermissionFlagsBits.ViewChannel]
             }))
@@ -133,6 +140,7 @@ export const confirmTicketCreation = async (interaction) => {
     // Send Claim Prompt to management channel
     const claimChannel = interaction.guild.channels.cache.get(config.claimChannelId);
     if (claimChannel) {
+        const allowedRoles = await getAllowedRoles(guildId);
         const pingRoles = allowedRoles.map(roleId => `<@&${roleId}>`).join(' ');
         const promptMsg = await claimChannel.send({
             content: `📢 تيكيت جديد بانتظار الاستلام! ${pingRoles}`,
@@ -254,6 +262,7 @@ export const handleClaimTicket = async (interaction) => {
 
     const ticketChannel = interaction.guild.channels.cache.get(targetTicket.channelId);
     if (ticketChannel) {
+        const allowedRoles = await getAllowedRoles(interaction.guild.id);
         // Reveal channel to all management roles
         for (const roleId of allowedRoles) {
             await ticketChannel.permissionOverwrites.edit(roleId, {

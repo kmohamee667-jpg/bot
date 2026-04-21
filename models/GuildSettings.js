@@ -8,6 +8,10 @@ const guildSettingsSchema = new mongoose.Schema({
         type: Map,
         of: Boolean,
         default: {}
+    },
+    allowedTicketRoles: {
+        type: [String],
+        default: []
     }
 });
 
