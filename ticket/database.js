@@ -56,7 +56,7 @@ export const updateTicketStatus = async (channelId, status, updaterId, logData =
             ...(status === 'closed' && { closedBy: updaterId, closedAt: new Date() }),
             logData 
         },
-        { new: true }
+        { new: true, returnDocument: 'after' }
     );
 };
 
@@ -64,7 +64,7 @@ export const claimTicket = async (channelId, claimerId) => {
     return await Ticket.findOneAndUpdate(
         { channelId, claimedBy: null },
         { claimedBy: claimerId, claimedAt: new Date() },
-        { new: true }
+        { new: true, returnDocument: 'after' }
     );
 };
 
