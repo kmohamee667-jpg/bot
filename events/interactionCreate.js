@@ -363,19 +363,19 @@ export default async (interaction) => {
 // === TICKET SYSTEM HANDLERS ===
     // Check if ticket channel first (early return for performance)
     if (interaction.channelId === config.ticketChannelId && interaction.isButton() && interaction.customId === 'ticket_create') {
-        console.log('🎫 Ticket interaction detected:', interaction.customId);
-        console.log('Channel ID:', interaction.channelId);
-        console.log('Config ticket channel ID:', config.ticketChannelId);
-        console.log('✅ Ticket create button clicked');
+        console.log('🎫 [TICKET CREATE] Button clicked by', interaction.user.tag);
+        console.log('Channel:', interaction.channelId === config.ticketChannelId ? '✅ Match' : '❌ No match');
         const { handleCreateTicket } = await import('../ticket/ticketManager.js');
         try {
             await handleCreateTicket(interaction);
+            console.log('✅ handleCreateTicket completed');
         } catch (error) {
-            console.error('❌ Error in handleCreateTicket:', error);
-            await interaction.reply({ content: 'حدث خطأ في إنشاء التيكيت!', ephemeral: true }).catch(() => {});
+            console.error('❌ [TICKET CREATE ERROR]:', error);
+            await interaction.reply({ content: 'حدث خطأ! تحقق من console.', ephemeral: true }).catch(() => {});
         }
         return;
     }
+
 
     // All other ticket interactions
     if (interaction.customId?.startsWith('ticket_')) {
