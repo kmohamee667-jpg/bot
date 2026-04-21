@@ -313,30 +313,44 @@ const sendStructuredLog = async (guild, event, data = {}) => {
         const logChannel = guild.channels.cache.get(config.logsChannelId);
         if (!logChannel) return;
 
-        let titleEmoji = '📋', color = Colors.Grey, titleText = event;
+        const client = guild.client;
+        const user = data.userId ? await client.users.fetch(data.userId).catch(() => null) : null;
+
+        let titleEmoji = '📋', color = 0x2F3136, titleText = event;
         switch(event.toLowerCase()) {
-            case 'ticket_created': titleEmoji = '🎫'; color = Colors.Green; titleText = 'New ticket opened'; break;
-            case 'ticket_closed': titleEmoji = '🔒'; color = Colors.Red; titleText = 'Ticket closed'; break;
-            case 'ticket_claimed': titleEmoji = '✅'; color = Colors.Orange; titleText = 'Ticket claimed'; break;
-            case 'ticket_reopened': titleEmoji = '🔓'; color = Colors.Yellow; titleText = 'Ticket reopened'; break;
-            case 'ticket_deleted': titleEmoji = '🗑️'; color = Colors.DarkRed; titleText = 'Ticket deleted'; break;
-            case 'spam_detected': titleEmoji = '❌'; color = Colors.Orange; titleText = 'Spam attempt'; break;
-            case 'old_ticket_cleaned': titleEmoji = '🧹'; color = Colors.Green; titleText = 'Old ticket cleaned'; break;
-            case 'db_error': titleEmoji = '❌'; color = Colors.Red; titleText = 'DB error'; break;
-            case 'defer_failed': titleEmoji = '⚠️'; color = Colors.Red; titleText = 'Defer failed'; break;
-            default: titleEmoji = '📋'; color = Colors.Grey; titleText = event;
+            case 'ticket_created': titleEmoji = '🎫'; color = 0x2ECC71; titleText = 'فتح تيكيت جديد'; break;
+            case 'ticket_closed': titleEmoji = '🔒'; color = 0xE74C3C; titleText = 'تم إغلاق التيكيت'; break;
+            case 'ticket_claimed': titleEmoji = '✅'; color = 0x3498DB; titleText = 'تم استلام التيكيت'; break;
+            case 'ticket_reopened': titleEmoji = '🔓'; color = 0xF1C40F; titleText = 'إعادة فتح التيكيت'; break;
+            case 'ticket_deleted': titleEmoji = '🗑️'; color = 0x95A5A6; titleText = 'حذف التيكيت نهائياً'; break;
+            case 'spam_detected': titleEmoji = '❌'; color = 0xE67E22; titleText = 'كشف محاولة سبام'; break;
+            case 'old_ticket_cleaned': titleEmoji = '🧹'; color = 0x1ABC9C; titleText = 'تنظيف تيكيت قديم'; break;
+            case 'db_error': titleEmoji = '⚠️'; color = 0x992D22; titleText = 'خطأ في قاعدة البيانات'; break;
+            case 'defer_failed': titleEmoji = '⚠️'; color = 0x992D22; titleText = 'فشل الرد السريع'; break;
+            default: titleEmoji = '📑'; color = 0x2F3136; titleText = event;
         }
 
         const embed = new EmbedBuilder()
+            .setAuthor({ 
+                name: user ? `${user.tag} (${user.id})` : 'نظام التيكيت', 
+                iconURL: user ? user.displayAvatarURL({ dynamic: true }) : client.user.displayAvatarURL() 
+            })
             .setTitle(`${titleEmoji} ${titleText}`)
             .setColor(color)
+            .setThumbnail(user ? user.displayAvatarURL({ dynamic: true, size: 256 }) : client.user.displayAvatarURL())
             .addFields(
-                { name: '👤 User', value: `<@${data.userId || 'Unknown'}>`, inline: true },
-                { name: '🎫 Ticket', value: data.ticketId ? `#${data.ticketId}` : data.channel ? `<#${data.channel}>` : 'N/A', inline: true },
-                { name: 'Details', value: data.details || 'No details', inline: false }
+                { name: '👤 المنفذ/المستخدم', value: data.userId ? `<@${data.userId}>` : '`System`', inline: true },
+                { name: '🎫 التيكيت', value: data.ticketId ? `\`#${data.ticketId}\`` : data.channel ? `<#${data.channel}>` : '`N/A`', inline: true }
             )
-            .setFooter({ text: 'Ticket System v3.0' })
+            .setFooter({ 
+                text: `${guild.name} • سجلات التيكيت`, 
+                iconURL: client.user.displayAvatarURL({ dynamic: true }) 
+            })
             .setTimestamp();
+
+        if (data.details) {
+            embed.addFields({ name: '📝 تفاصيل إضافية', value: `\`\`\`\n${data.details}\n\`\`\``, inline: false });
+        }
 
         await logChannel.send({ embeds: [embed] });
     } catch (err) {

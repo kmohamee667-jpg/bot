@@ -110,8 +110,7 @@ export const claimedInTicketEmbed = (claimer, ticket) => {
       { name: '🕒 وقت الاستلام', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: false }
     )
     .setThumbnail(claimer.displayAvatarURL({ dynamic: true, size: 512 }))
-    .setImage(claimer.displayAvatarURL({ dynamic: true, size: 512 }))
-    .setColor(0x3498DB) // Blue
+    .setColor(0x3498DB)
     .setFooter({ text: 'نتمنى لك تجربة سعيدة!', iconURL: claimer.displayAvatarURL({ dynamic: true }) })
     .setTimestamp();
 };
