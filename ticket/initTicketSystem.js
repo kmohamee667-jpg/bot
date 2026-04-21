@@ -3,12 +3,14 @@ import config from '../config/config.js';
 import { createTicketRow } from './buttonsHandler.js';
 
 export const initTicketSystem = async (client, config) => {
+    console.log('🎫 Initializing ticket system...');
     try {
         const channel = client.channels.cache.get(config.ticketChannelId);
         if (!channel) {
             console.log('❌ Ticket channel not found:', config.ticketChannelId);
             return;
         }
+        console.log('✅ Ticket channel found:', config.ticketChannelId);
 
         const messages = await channel.messages.fetch({ limit: 10 });
         const existingTicketMsg = messages.find(msg => 
@@ -27,12 +29,12 @@ export const initTicketSystem = async (client, config) => {
                 embeds: [embed], 
                 components: [createTicketRow()] 
             });
-            console.log('✅ Ticket system initialized - initial message sent');
+            console.log('✅ Ticket message sent successfully');
         } else {
             console.log('✅ Ticket system already initialized');
         }
     } catch (error) {
-        console.error('❌ Ticket system init failed:', error);
+        console.error('❌ Error sending ticket message:', error);
     }
 };
 
