@@ -16,6 +16,9 @@ import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+// Ticket System
+import { initTicketSystem } from './ticket/initTicketSystem.js';
+
 // Command Imports
 import mas7Command from './text-commands/admins/mas7.js';
 import nicknameCommand from './text-commands/admins/nickname.js';
