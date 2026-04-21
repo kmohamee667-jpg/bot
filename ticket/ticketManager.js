@@ -10,13 +10,12 @@ import {
 import { initTicketSystem } from './initTicketSystem.js';
 
 import config from '../config/config.js';
-import { createTicketRow,closeConfirmRowClose, closeConfirmRow, ticketControlsRow, supportControlsRow, welcomeEmbed, closedEmbed } from './buttonsHandler.js';
+import { createTicketRow, closeConfirmRow, closeConfirmRowClose, ticketControlsRow, supportControlsRow, welcomeEmbed, closedEmbed, claimPromptEmbed, claimPromptRow } from './buttonsHandler.js';
 import { getNextTicketId, createTicket, getUserOpenTicket, getTicketByChannelId, updateTicketStatus, claimTicket } from './database.js';
 
 export { initTicketSystem };
 
 const allowedRoles = config.allowedTicketRoles;
-
 
 export const handleCreateTicket = async (interaction) => {
     console.log('🎫 [CREATE-TICKET] START - User:', interaction.user.tag, 'Guild:', interaction.guild.id);
@@ -60,8 +59,6 @@ export const handleCreateTicket = async (interaction) => {
     console.log('✅ CONFIRM SENT');
 };
 
-
-
 export const confirmTicketCreation = async (interaction) => {
     const guildId = interaction.guild.id;
     const userId = interaction.user.id;
@@ -96,15 +93,28 @@ export const confirmTicketCreation = async (interaction) => {
 
     await createTicket(ticketData);
 
-    const welcomeMsg = await channel.send({
-        content: `<@${userId}> Welcome`,
-        embeds: [welcomeEmbed(interaction.user)],
-        components: [ticketControlsRow()]
+    const ticket = await getTicketByChannelId(channel.id);
+
+    // Mention msg separate
+    await channel.send(`<@${userId}> يرجى الانتظار حتى يتم الرد عليك من فريق الدعم... 🎫`);
+
+    // Welcome embed
+    await channel.send({
+        embeds: [welcomeEmbed(interaction.user)]
     });
 
-    const waitMsg = await channel.send('انتظر حتى يتم الرد عليك...');
-    
-    // Ping allowed roles
+    // Hide from user
+    await channel.permissionOverwrites.edit(userId, {
+        ViewChannel: false
+    });
+
+    // Admin claim prompt
+    await channel.send({
+        embeds: [claimPromptEmbed(ticket)],
+        components: [claimPromptRow()]
+    });
+
+    // Ping admins
     const pingRoles = allowedRoles.map(roleId => `<@&${roleId}>`).join(' ');
     await channel.send(pingRoles);
 
@@ -127,17 +137,28 @@ export const handleCloseTicket = async (interaction) => {
     });
 };
 
-
 export const executeCloseTicket = async (interaction) => {
     const ticket = await getTicketByChannelId(interaction.channelId);
     if (!ticket) return interaction.reply({ content: 'تيكيت غير موجود!', ephemeral: true });
 
-    // Lock & remove user perms
+    // Complete deny user access
+    await interaction.channel.permissionOverwrites.edit(ticket.userId, {
+        ViewChannel: false,
+        SendMessages: false,
+        ReadMessageHistory: false
+    }, { reason: 'Ticket closed' });
+
+    // Lock everyone SendMessages
     await interaction.channel.permissionOverwrites.edit(interaction.guild.id, { 
-        SendMessages: false, 
-        ReadMessageHistory: ticket.status === 'open' ? false : true 
+        SendMessages: false 
     });
-    await interaction.channel.permissionOverwrites.delete(ticket.userId);
+
+    // Move user to welcome channel if in voice
+    const welcomeChannel = interaction.guild.channels.cache.get(config.welcomeChannel);
+    const member = await interaction.guild.members.fetch(ticket.userId).catch(() => null);
+    if (member && member.voice.channel) {
+        await member.voice.setChannel(welcomeChannel).catch(() => {});
+    }
 
     // Update DB
     await updateTicketStatus(interaction.channelId, 'closed', interaction.user.id);
@@ -148,7 +169,7 @@ export const executeCloseTicket = async (interaction) => {
 
     await interaction.channel.send({ embeds: [closedEmbed(interaction.user)] });
 
-    // Send support controls
+    // Support controls
     await interaction.channel.send({
         embeds: [new EmbedBuilder()
             .setTitle('Support team ticket controls')
@@ -164,19 +185,42 @@ export const executeCloseTicket = async (interaction) => {
 };
 
 export const handleClaimTicket = async (interaction) => {
-    const ticket = await claimTicket(interaction.channelId, interaction.user.id);
-    if (!ticket) {
-        return interaction.reply({ content: 'التيكيت مستلم بالفعل أو مغلق!', ephemeral: true });
+    const ticket = await getTicketByChannelId(interaction.channelId);
+    if (ticket.claimedBy) {
+        return interaction.reply({ content: `تم استلام التيكيت بالفعل بواسطة <@${ticket.claimedBy}>!`, ephemeral: true });
     }
 
-    // Hide claim button for others (update message)
-    const messages = await interaction.channel.messages.fetch({ limit: 10 });
-    const controlMsg = messages.find(msg => msg.components[0]?.components[0]?.customId === 'ticket_claim');
-    if (controlMsg) {
-        await controlMsg.edit({ components: [ticketControlsRow()] }); // Regenerate without hiding logic yet
+    const newTicket = await claimTicket(interaction.channelId, interaction.user.id);
+    if (!newTicket) {
+        return interaction.reply({ content: 'خطأ في استلام التيكيت!', ephemeral: true });
     }
 
-    await interaction.reply({ content: `تم استلام التيكيت بواسطة <@${interaction.user.id}> ✅`, ephemeral: true });
+    // Restore user perms
+    await interaction.channel.permissionOverwrites.edit(ticket.userId, {
+        ViewChannel: true,
+        SendMessages: true,
+        ReadMessageHistory: true
+    });
+
+    // Delete claim prompt
+    const messages = await interaction.channel.messages.fetch({ limit: 20 });
+    const promptMsg = messages.find(msg => msg.embeds[0] && msg.embeds[0].title.includes('استلام'));
+    if (promptMsg) {
+        await promptMsg.delete().catch(() => {});
+    }
+
+    // Public confirm msg
+    const publicText = `\`\`\n✅ تم استلام التيكيت بواسطة <@${interaction.user.id}>\nهذه التيكيت خاصة بـ <@${ticket.userId}>\nتم فتحها في ${ticket.createdAt.toLocaleString('ar-EG')}\n\`\`\``;
+    await interaction.channel.send({
+        content: publicText,
+        embeds: [new EmbedBuilder()
+            .setDescription('تم الاستلام بنجاح')
+            .setThumbnail(interaction.user.displayAvatarURL())
+            .setColor('Green')
+        ]
+    });
+
+    await interaction.reply({ content: '✅ تم استلام التيكيت!', ephemeral: true });
 
     await sendLog(interaction.guild, `**تيكيت مستلم** ✅\n<@${interaction.user.id}> استلم <#${interaction.channelId}> (ID: ${ticket.ticketId})`);
 };
