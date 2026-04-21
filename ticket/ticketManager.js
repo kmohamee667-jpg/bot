@@ -168,17 +168,19 @@ export const executeCloseTicket = async (interaction) => {
         return interaction.reply({ embeds: [errEmbed], ephemeral: true });
     }
 
-    // Complete deny user access + clear cache
-    await interaction.channel.permissionOverwrites.edit(ticket.userId, {
-        ViewChannel: false,
-        SendMessages: false,
-        ReadMessageHistory: false
-    }, { reason: 'Ticket closed' });
+    // Complete deny user access
+    if (ticket.userId) {
+        await interaction.channel.permissionOverwrites.edit(ticket.userId.toString(), {
+            ViewChannel: false,
+            SendMessages: false,
+            ReadMessageHistory: false
+        }, { reason: 'Ticket closed' }).catch(err => console.error(`Failed to remove perms for user ${ticket.userId}:`, err));
+    }
 
-    // Lock everyone SendMessages
-    await interaction.channel.permissionOverwrites.edit(interaction.guild.id, { 
+    // Lock everyone SendMessages (@everyone role)
+    await interaction.channel.permissionOverwrites.edit(interaction.guild.roles.everyone, { 
         SendMessages: false 
-    });
+    }).catch(err => console.error('Failed to lock everyone perms:', err));
 
     // Move user to welcome channel if in voice
     const welcomeChannel = interaction.guild.channels.cache.get(config.welcomeChannel);
