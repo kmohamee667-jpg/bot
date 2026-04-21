@@ -49,16 +49,16 @@ export async function generateCoinCard(username, avatarURL, balance) {
         console.error('Error loading avatar for canvas:', e);
     }
 
-    // 4. Text: COINS
+    // 4. Text: Coins
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 36px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('COINS', width / 2, height / 2 + 100);
+    ctx.fillText('Coins', width / 2, 280);
 
     // 5. Text: Balance
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 60px sans-serif';
-    ctx.fillText(balance.toLocaleString(), width / 2, height / 2 + 160);
+    ctx.fillText(balance.toLocaleString(), width / 2, 350);
 
     return canvas.toBuffer('image/png');
 }

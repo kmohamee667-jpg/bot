@@ -63,10 +63,7 @@ export default async (interaction) => {
                     await handleDeleteTicket(interaction);
                     break;
                 default:
-const unknownEmbed = new EmbedBuilder()
-    .setDescription('زر غير مدعوم')
-    .setColor('Grey');
-await interaction.reply({ embeds: [unknownEmbed], flags: [MessageFlags.Ephemeral] });
+                    return;
             }
         } catch (error) {
             console.error('🎫 TICKET ERROR:', error);
@@ -132,11 +129,6 @@ await interaction.reply({ embeds: [unknownEmbed], flags: [MessageFlags.Ephemeral
                 return interaction.reply({ content: 'أنت لست صاحب هذه الغرفة أو إدارياً للتحكم بها!', flags: [MessageFlags.Ephemeral] });
             }
             return;
-        }
-
-        // Additional check for data-reliant actions
-        if (!vcData && interaction.customId !== 'vc_rename' && interaction.customId !== 'vc_limit') {
-             // We allow rename/limit to fail gracefully or try to recover
         }
 
         if (interaction.customId === 'vc_rename') {
@@ -267,7 +259,6 @@ await interaction.reply({ embeds: [unknownEmbed], flags: [MessageFlags.Ephemeral
                 return interaction.update({ content: 'تم قفل الشات! 📵', components: [] });
             }
 
-            // New gender privacy options
             if (selection === 'privacy_all') {
                 await channel.permissionOverwrites.edit(everyone, { ViewChannel: true });
                 vcData.privacyMode = 'all';
@@ -339,19 +330,15 @@ await interaction.reply({ embeds: [unknownEmbed], flags: [MessageFlags.Ephemeral
         if (interaction.customId === 'vc_select_transfer') {
             if (userId === interaction.user.id) return interaction.update({ content: 'لا يمكنك نقل الملكية لنفسك!', components: [] });
             
-            // Check if new owner already has settings record
             let newOwnerData = await PrivateVC.findOne({ ownerId: userId, guildId: interaction.guild.id });
             if (newOwnerData) {
                 if (newOwnerData.channelId) {
                     return interaction.update({ content: 'هذا العضو يملك قناة نشطة بالفعل، لا يمكنه استلام ملكية قناة أخرى حالياً.', components: [] });
                 }
-                // If the target user has inactive saved settings, delete them to avoid duplicate key error
                 await PrivateVC.deleteOne({ _id: newOwnerData._id });
             }
 
-// Transfer permissions - with error handling
             try {
-                // 1. Give New Owner permissions
                 await channel.permissionOverwrites.edit(userId, { 
                     ManageChannels: true, 
                     MoveMembers: true, 
@@ -360,93 +347,40 @@ await interaction.reply({ embeds: [unknownEmbed], flags: [MessageFlags.Ephemeral
                     Connect: true, 
                     ViewChannel: true 
                 });
-                console.log(`[VC Transfer] Granted full perms to new owner ${userId}`);
-
-                // 2. Remove Old Owner permissions
-                await channel.permissionOverwrites.delete(interaction.user.id).catch(err => {
-                    console.error(`[VC Transfer] Failed to delete old owner perms:`, err);
-                });
-                
-                // 3. If old owner is trusted, keep their trust permissions
+                await channel.permissionOverwrites.delete(interaction.user.id).catch(() => {});
                 if (vcData.trustedUsers.includes(interaction.user.id)) {
-                    await channel.permissionOverwrites.edit(interaction.user.id, { Connect: true, ViewChannel: true }).catch(err => {
-                        console.error(`[VC Transfer] Failed to set trust perms for old owner:`, err);
-                    });
+                    await channel.permissionOverwrites.edit(interaction.user.id, { Connect: true, ViewChannel: true }).catch(() => {});
                 }
             } catch (error) {
-                console.error(`[VC Transfer Error] Channel ${channel.id}, from ${interaction.user.id} to ${userId}:`, error);
-                return interaction.update({ content: '❌ خطأ في نقل الملكية. تأكد من صلاحيات البوت (Manage Channels).', components: [] });
+                return interaction.update({ content: '❌ خطأ في نقل الملكية.', components: [] });
             }
 
-            // Update DB
             vcData.ownerId = userId;
             await vcData.save();
 
-            // Public notification in the channel
             await interaction.update({ content: 'تم تنفيذ طلب نقل الملكية بنجاح. ✅', components: [] });
             return channel.send({ 
-                content: `👑 **انتقال ملكية**\nتم نقل ملكية هذه الغرفة من <@${interaction.user.id}> إلى <@${userId}>\nمبروك <@${userId}>، أنت الملك هنا الآن! 👑` 
+                content: `👑 **انتقال ملكية**\nتم نقل ملكية هذه الغرفة من <@${interaction.user.id}> إلى <@${userId}>` 
             });
         }
     }
 
-// === TICKET SYSTEM HANDLERS ===
-    // Check if ticket channel first (early return for performance)
-    // TOP PRIORITY TICKET - FIRST CHECK
-    if (interaction.isButton() && interaction.customId === 'ticket_create') {
-        console.log('🎫 [TICKET-CREATE] HIT - User:', interaction.user.tag);
-        const { handleCreateTicket } = await import('../ticket/ticketManager.js');
-        await handleCreateTicket(interaction);
-        return;
-    }
-
-
-
-
-    // All other ticket interactions
-    if (interaction.customId?.startsWith('ticket_')) {
-        const { 
-            handleCreateTicket, 
-            confirmTicketCreation, 
-            handleCloseTicket, 
-            executeCloseTicket, 
-            handleClaimTicket,
-            handleReopenTicket,
-            handleDeleteTicket 
-        } = await import('../ticket/ticketManager.js');
-        
+    // TICKET SYSTEM
+    if (interaction.isButton() && (interaction.customId === 'ticket_create' || interaction.customId.startsWith('ticket_'))) {
+        const { handleCreateTicket, confirmTicketCreation, handleCloseTicket, executeCloseTicket, handleClaimTicket, handleReopenTicket, handleDeleteTicket } = await import('../ticket/ticketManager.js');
         try {
-            console.log('🎫 Processing ticket interaction:', interaction.customId);
-            switch (interaction.customId) {
-                case 'ticket_confirm_yes':
-                    await confirmTicketCreation(interaction);
-                    break;
-                case 'ticket_close_confirm_yes':
-                    await executeCloseTicket(interaction);
-                    break;
-                case 'ticket_close_confirm_no':
+            switch(interaction.customId) {
+                case 'ticket_create': await handleCreateTicket(interaction); break;
+                case 'ticket_confirm_yes': await confirmTicketCreation(interaction); break;
                 case 'ticket_confirm_no':
-                    await interaction.update({ content: 'تم إلغاء العملية.', components: [], embeds: [] });
-                    break;
-                case 'ticket_close':
-                    await handleCloseTicket(interaction);
-                    break;
-                case 'ticket_claim':
-                    await handleClaimTicket(interaction);
-                    break;
-                case 'ticket_open':
-                    await handleReopenTicket(interaction);
-                    break;
-                case 'ticket_delete':
-                    await handleDeleteTicket(interaction);
-                    break;
-                default:
-                    await interaction.reply({ content: 'زر غير معروف!', ephemeral: true });
+                case 'ticket_close_confirm_no': await interaction.update({ content: 'تم إلغاء العملية ✅', components: [] }); break;
+                case 'ticket_close': await handleCloseTicket(interaction); break;
+                case 'ticket_close_confirm_yes': await executeCloseTicket(interaction); break;
+                case 'ticket_claim': await handleClaimTicket(interaction); break;
+                case 'ticket_open': await handleReopenTicket(interaction); break;
+                case 'ticket_delete': await handleDeleteTicket(interaction); break;
             }
-        } catch (error) {
-            console.error('[Ticket Error]:', error);
-            await interaction.reply({ content: 'حدث خطأ! حاول مرة أخرى.', ephemeral: true }).catch(() => {});
-        }
+        } catch (error) { console.error('Ticket Error:', error); }
         return;
     }
 
@@ -471,13 +405,16 @@ await interaction.reply({ embeds: [unknownEmbed], flags: [MessageFlags.Ephemeral
         }
     }
 
-    // === CHAT INPUT COMMANDS (SLASH) ===
+
+    // 5. Handle Slash Commands
     if (interaction.isChatInputCommand()) {
-        if (interaction.commandName === 'coins') {
+        const { commandName } = interaction;
+        if (commandName === 'coins') {
             const { handleCoinsSlash } = await import('../slash-commands/coins.js');
             await handleCoinsSlash(interaction);
+        } else if (['add-coins', 'remove-coins', 'reset-coins'].includes(commandName)) {
+            const { handleCoinAdminSlash } = await import('../slash-commands/coin-admin.js');
+            await handleCoinAdminSlash(interaction);
         }
     }
 };
-
-

@@ -136,7 +136,24 @@ client.once('ready', async () => {
             .addUserOption(option => 
                 option.setName('user')
                     .setDescription('العضو المراد رؤية رصيده (للإدارة فقط)')
-                    .setRequired(false))
+                    .setRequired(false)),
+        new SlashCommandBuilder()
+            .setName('add-coins')
+            .setDescription('إضافة كوينات لعضو')
+            .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+            .addUserOption(option => option.setName('user').setDescription('العضو').setRequired(true))
+            .addIntegerOption(option => option.setName('amount').setDescription('الكمية').setRequired(true)),
+        new SlashCommandBuilder()
+            .setName('remove-coins')
+            .setDescription('خصم كوينات من عضو')
+            .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+            .addUserOption(option => option.setName('user').setDescription('العضو').setRequired(true))
+            .addIntegerOption(option => option.setName('amount').setDescription('الكمية').setRequired(true)),
+        new SlashCommandBuilder()
+            .setName('reset-coins')
+            .setDescription('تصفير رصيد عضو أو السيرفر بالكامل')
+            .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+            .addUserOption(option => option.setName('user').setDescription('العضو (اتركه فارغاً لتصفير السيرفر)').setRequired(false))
     ].map(command => command.toJSON());
 
     const rest = new REST({ version: '10' }).setToken(config.token);
@@ -173,10 +190,7 @@ const COMMAND_MAP = {
     'time': 'time',
     'تايم': 'time',
     'untime': 'untime',
-    'انتايم': 'untime',
-    'add-coins': 'add-coins',
-    'remove-coins': 'remove-coins',
-    'rm-all-coins': 'rm-all-coins'
+    'انتايم': 'untime'
 };
 
 // --- MESSAGE HANDLER ---
@@ -217,15 +231,6 @@ client.on('messageCreate', async (message) => {
     } else if (technicalName === 'time' || technicalName === 'untime') {
         const timeoutCommand = (await import('./text-commands/admins/timeout.js')).default;
         await timeoutCommand(message, args.slice(1));
-    } else if (technicalName === 'add-coins') {
-        const addCoins = (await import('./text-commands/admins/add-coins.js')).default;
-        await addCoins(message, args.slice(1));
-    } else if (technicalName === 'remove-coins') {
-        const removeCoins = (await import('./text-commands/admins/remove-coins.js')).default;
-        await removeCoins(message, args.slice(1));
-    } else if (technicalName === 'rm-all-coins') {
-        const rmAllCoins = (await import('./text-commands/admins/rm-all-coins.js')).default;
-        await rmAllCoins(message, args.slice(1));
     }
 });
 
