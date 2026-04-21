@@ -2,15 +2,13 @@ import {
     PermissionFlagsBits, 
     ChannelType, 
     EmbedBuilder,
-    Colors 
-} from 'discord.js';
-import { 
-    PermissionFlagsBits, 
-    ChannelType, 
-    EmbedBuilder,
-    Colors 
+    Colors, 
+    ActionRowBuilder, 
+    ButtonBuilder, 
+    ButtonStyle 
 } from 'discord.js';
 import { initTicketSystem } from './initTicketSystem.js';
+
 import config from '../config/config.js';
 import { createTicketRow, closeConfirmRow, ticketControlsRow, supportControlsRow, welcomeEmbed, closedEmbed } from './buttonsHandler.js';
 import { getNextTicketId, createTicket, getUserOpenTicket, getTicketByChannelId, updateTicketStatus, claimTicket } from './database.js';
@@ -21,38 +19,47 @@ const allowedRoles = config.allowedTicketRoles;
 
 
 export const handleCreateTicket = async (interaction) => {
-    console.log('🎫 [CREATE] User:', interaction.user.tag);
+    console.log('🎫 [CREATE-TICKET] START - User:', interaction.user.tag, 'Guild:', interaction.guild.id);
     
-    // Defer لضمان عدم timeout
-    await interaction.deferReply({ ephemeral: true });
+    try {
+        await interaction.deferReply({ ephemeral: true });
+    } catch (deferErr) {
+        console.error('Defer failed:', deferErr);
+        return;
+    }
     
     const guildId = interaction.guild.id;
     const userId = interaction.user.id;
     
-    // Anti-spam check
-    const openTicket = await getUserOpenTicket(userId, guildId);
+    console.log('🔍 Checking spam for user:', userId);
+    let openTicket;
+    try {
+        openTicket = await getUserOpenTicket(userId, guildId);
+    } catch (dbErr) {
+        console.error('DB spam check failed:', dbErr);
+    }
+    
     if (openTicket) {
-        console.log('❌ User has open ticket:', openTicket.channelId);
-        await interaction.editReply({ content: 'لديك تيكيت مفتوح بالفعل: <#' + openTicket.channelId + '>' });
+        console.log('❌ SPAM DETECTED - Open ticket:', openTicket.ticketId);
+        await interaction.editReply({ content: `لديك تيكيت مفتوح: <#${openTicket.channelId}> 🎫` });
         return;
     }
-
+    
+    console.log('✅ No spam - sending confirm');
     const confirmEmbed = new EmbedBuilder()
-        .setTitle('🎫 تأكيد')
-        .setDescription('هل أنت متأكد أنك تريد فتح تيكيت؟')
+        .setTitle('🎫 تأكيد فتح تيكت')
+        .setDescription('هل أنت متأكد؟')
         .setColor('Yellow');
-
+    
     const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('ticket_confirm_yes').setLabel('نعم').setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId('ticket_confirm_yes').setLabel('نعم ✅').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId('ticket_confirm_no').setLabel('لا').setStyle(ButtonStyle.Secondary)
     );
 
-    await interaction.editReply({ 
-        embeds: [confirmEmbed], 
-        components: [row] 
-    });
-    console.log('✅ Confirmation sent');
+    await interaction.editReply({ embeds: [confirmEmbed], components: [row] });
+    console.log('✅ CONFIRM SENT');
 };
+
 
 
 export const confirmTicketCreation = async (interaction) => {
