@@ -21,29 +21,39 @@ const allowedRoles = config.allowedTicketRoles;
 
 
 export const handleCreateTicket = async (interaction) => {
-    console.log('🎫 handleCreateTicket called for user:', interaction.user.id);
+    console.log('🎫 [CREATE] User:', interaction.user.tag);
+    
+    // Defer لضمان عدم timeout
+    await interaction.deferReply({ ephemeral: true });
+    
     const guildId = interaction.guild.id;
     const userId = interaction.user.id;
     
     // Anti-spam check
     const openTicket = await getUserOpenTicket(userId, guildId);
     if (openTicket) {
-        return interaction.reply({ content: 'لديك تيكيت مفتوح بالفعل!', ephemeral: true });
+        console.log('❌ User has open ticket:', openTicket.channelId);
+        await interaction.editReply({ content: 'لديك تيكيت مفتوح بالفعل: <#' + openTicket.channelId + '>' });
+        return;
     }
-    console.log('✅ No open ticket found, proceeding...');
 
     const confirmEmbed = new EmbedBuilder()
         .setTitle('🎫 تأكيد')
         .setDescription('هل أنت متأكد أنك تريد فتح تيكيت؟')
-        .setColor(Colors.Yellow);
+        .setColor('Yellow');
 
-    await interaction.reply({ 
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('ticket_confirm_yes').setLabel('نعم').setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId('ticket_confirm_no').setLabel('لا').setStyle(ButtonStyle.Secondary)
+    );
+
+    await interaction.editReply({ 
         embeds: [confirmEmbed], 
-        components: [closeConfirmRow()], 
-        ephemeral: true 
+        components: [row] 
     });
-    console.log('✅ Confirmation embed sent');
+    console.log('✅ Confirmation sent');
 };
+
 
 export const confirmTicketCreation = async (interaction) => {
     const guildId = interaction.guild.id;

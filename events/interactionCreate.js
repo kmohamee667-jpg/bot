@@ -362,26 +362,14 @@ export default async (interaction) => {
 
 // === TICKET SYSTEM HANDLERS ===
     // Check if ticket channel first (early return for performance)
-    console.log('🔍 All interactions:', {
-        customId: interaction.customId,
-        channelId: interaction.channelId,
-        userId: interaction.user.id,
-        isButton: interaction.isButton(),
-        ticketChannel: config.ticketChannelId
-    });
-    
-    // TICKET CREATE - FIXED TOP PRIORITY (before all other checks)
+    // TOP PRIORITY TICKET - FIRST CHECK
     if (interaction.isButton() && interaction.customId === 'ticket_create') {
-        console.log('🎫 [TICKET CREATE HIT] ✅');
+        console.log('🎫 [TICKET-CREATE] HIT - User:', interaction.user.tag);
         const { handleCreateTicket } = await import('../ticket/ticketManager.js');
-        try {
-            await handleCreateTicket(interaction);
-        } catch (error) {
-            console.error('💥 FULL TICKET ERROR:', error);
-            await interaction.reply({ content: 'خطأ داخلي! شوف console.', ephemeral: true }).catch(() => {});
-        }
+        await handleCreateTicket(interaction);
         return;
     }
+
 
 
 
