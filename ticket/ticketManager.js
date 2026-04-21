@@ -10,7 +10,7 @@ import {
 import { initTicketSystem } from './initTicketSystem.js';
 
 import config from '../config/config.js';
-import { createTicketRow, closeConfirmRow, ticketControlsRow, supportControlsRow, welcomeEmbed, closedEmbed } from './buttonsHandler.js';
+import { createTicketRow,closeConfirmRowClose, closeConfirmRow, ticketControlsRow, supportControlsRow, welcomeEmbed, closedEmbed } from './buttonsHandler.js';
 import { getNextTicketId, createTicket, getUserOpenTicket, getTicketByChannelId, updateTicketStatus, claimTicket } from './database.js';
 
 export { initTicketSystem };
