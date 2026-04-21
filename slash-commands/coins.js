@@ -24,9 +24,11 @@ export async function handleCoinsSlash(interaction) {
     await interaction.deferReply();
 
     try {
-        // 2. Get Balance
-        const coinData = await Coin.findOne({ guildId: interaction.guild.id, userId: targetUser.id });
-        const balance = coinData ? coinData.balance : 0;
+        // 2. Get Balance with robust fetching
+        let coinData = await Coin.findOne({ guildId: interaction.guild.id, userId: targetUser.id }).lean();
+        const balance = coinData ? Math.floor(coinData.balance) : 0;
+        
+        console.log(`[Coins Debug] Fetched balance for ${targetUser.id} in ${interaction.guild.id}: ${balance}`);
 
         // 3. Generate Image
         const avatarURL = targetUser.displayAvatarURL({ extension: 'png', size: 256 });
@@ -36,6 +38,7 @@ export async function handleCoinsSlash(interaction) {
         // 4. Create Embed
         const embed = new EmbedBuilder()
             .setTitle(`💰 رصيد الكوينات - ${targetUser.username}`)
+            .setDescription(`>>> **الرصيد الحالي:** \`${balance}\` كوين`)
             .setImage('attachment://coins.png')
             .setColor(Colors.Gold)
             .setFooter({ text: `طلب بواسطة: ${interaction.user.tag}` })
