@@ -6,21 +6,23 @@ export const getNextTicketId = async (guildId) => {
         const lastTicket = await Ticket.findOne({ guildId }).sort({ ticketId: -1 });
         return (lastTicket?.ticketId || 0) + 1;
     } catch (error) {
-        console.error('❌ DB Error in getNextTicketId:', error.message);
+        console.error('DB getNextTicketId error:', error.message);
         return 1; // Fallback
     }
 };
 
 
-export const createTicket = async (data) => {
-    console.log('🔄 Creating ticket with data:', data);
+export const createTicket = async (data, guild) => {
+    console.log('Creating ticket with data:', data);
     try {
         const ticket = new Ticket(data);
         await ticket.save();
-        console.log('✅ Ticket created ID:', ticket.ticketId);
+        console.log('Ticket created ID:', ticket.ticketId);
+        if (guild) sendStructuredLog(guild, 'db_ticket_created', { ticketId: ticket.ticketId });
         return ticket;
     } catch (error) {
-        console.error('❌ Create ticket failed:', error.message);
+        console.error('Create ticket failed:', error.message);
+        if (guild) sendStructuredLog(guild, 'db_error', { details: 'createTicket failed' });
         return null;
     }
 };

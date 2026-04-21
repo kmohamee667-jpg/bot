@@ -18,24 +18,24 @@ export { initTicketSystem };
 const allowedRoles = config.allowedTicketRoles;
 
 export const handleCreateTicket = async (interaction) => {
-    console.log('🎫 [CREATE-TICKET] START - User:', interaction.user.tag, 'Guild:', interaction.guild.id);
+    await sendStructuredLog(interaction.guild, 'create_start', { userId: interaction.user.id, details: `User: ${interaction.user.tag}` });
     
     try {
         await interaction.deferReply({ ephemeral: true });
     } catch (deferErr) {
-        console.error('Defer failed:', deferErr);
+        await sendStructuredLog(interaction.guild, 'defer_failed', { userId: interaction.user.id, details: deferErr.message });
         return;
     }
     
     const guildId = interaction.guild.id;
     const userId = interaction.user.id;
     
-    console.log('🔍 Checking spam for user:', userId);
+    await sendStructuredLog(interaction.guild, 'spam_check', { userId, details: 'Checking open ticket' });
     let openTicket;
     try {
         openTicket = await getUserOpenTicket(userId, guildId);
     } catch (dbErr) {
-        console.error('DB spam check failed:', dbErr);
+        await sendStructuredLog(interaction.guild, 'db_error', { userId, details: `Spam check DB: ${dbErr.message}` });
     }
     
     if (openTicket) {
@@ -68,7 +68,7 @@ export const handleCreateTicket = async (interaction) => {
     );
 
     await interaction.editReply({ embeds: [confirmEmbed], components: [row] });
-    console.log('✅ CONFIRM SENT');
+    await sendStructuredLog(interaction.guild, 'confirm_sent', { userId });
 };
 
 export const confirmTicketCreation = async (interaction) => {
@@ -237,16 +237,36 @@ export const handleClaimTicket = async (interaction) => {
     }
 
     // Public confirm msg
-    const publicText = `\`\`\n✅ تم استلام التيكيت بواسطة <@${interaction.user.id}>\nهذه التيكيت خاصة بـ <@${ticket.userId}>\nتم فتحها في ${ticket.createdAt.toLocaleString('ar-EG')}\n\`\`\``;
     await interaction.channel.send({
-        content: publicText,
-        embeds: [new EmbedBuilder()
-            .setAuthor({
-                name: `الاداري ${interaction.user.toString()}`,
-                iconURL: interaction.user.displayAvatarURL({ dynamic: true })
-            })
-            .setDescription(`التيكيت خاصه ب <@${ticket.userId}>\nتم انشائها في ${ticket.createdAt.toLocaleString('en-US')}`)
-            .setColor('Green')
+        embeds: [
+            new EmbedBuilder()
+                .setAuthor({
+                    name: `👤 الاداري: ${interaction.user.username}`,
+                    iconURL: interaction.user.displayAvatarURL({ dynamic: true })
+                })
+                .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true })) // صورة يمين بشكل مربع
+                .setColor('Green')
+                .addFields(
+                    {
+                        name: '🎫 استلام التيكيت',
+                        value: `تم استلام التيكيت بواسطة <@${interaction.user.id}>`,
+                        inline: false
+                    },
+                    {
+                        name: '👤 صاحب التيكيت',
+                        value: `<@${ticket.userId}>`,
+                        inline: true
+                    },
+                    {
+                        name: '📅 تاريخ الإنشاء',
+                        value: `${ticket.createdAt.toLocaleString('en-US')}`,
+                        inline: true
+                    }
+                )
+                .setFooter({
+                    text: 'Ticket System'
+                })
+                .setTimestamp()
         ]
     });
 
@@ -255,8 +275,38 @@ export const handleClaimTicket = async (interaction) => {
         .setColor('Green');
     await interaction.reply({ embeds: [claimSuccessEmbed], ephemeral: true });
 
-    await sendLog(interaction.guild, `**تيكيت مستلم** ✅\n<@${interaction.user.id}> استلم <#${interaction.channelId}> (ID: ${ticket.ticketId})`);
-};
+    await sendLog(interaction.guild, {
+        embeds: [
+            new EmbedBuilder()
+                .setTitle('🎫 Ticket Claimed')
+                .setColor('Green')
+                .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
+                .addFields(
+                    {
+                        name: '👤 الأدمن',
+                        value: `<@${interaction.user.id}>`,
+                        inline: true
+                    },
+                    {
+                        name: '🎟️ التيكيت',
+                        value: `<#${interaction.channelId}>`,
+                        inline: true
+                    },
+                    {
+                        name: '🆔 Ticket ID',
+                        value: `${ticket.ticketId}`,
+                        inline: true
+                    },
+                    {
+                        name: '📌 الحالة',
+                        value: 'تم الاستلام',
+                        inline: false
+                    }
+                )
+                .setTimestamp()
+                .setFooter({ text: 'Ticket System Log' })
+        ]
+    });};
 
 export const handleReopenTicket = async (interaction) => {
     const ticket = await getTicketByChannelId(interaction.channelId);
@@ -285,14 +335,39 @@ export const handleDeleteTicket = async (interaction) => {
     await interaction.channel.delete();
 };
 
-const sendLog = async (guild, content) => {
+const sendStructuredLog = async (guild, event, data = {}) => {
     try {
         const logChannel = guild.channels.cache.get(config.logsChannelId);
-        if (logChannel) {
-            await logChannel.send(content);
+        if (!logChannel) return;
+
+        let titleEmoji = '📋', color = Colors.Grey, titleText = event;
+        switch(event.toLowerCase()) {
+            case 'ticket_created': titleEmoji = '🎫'; color = Colors.Green; titleText = 'تيكيت جديد مفتوح'; break;
+            case 'ticket_closed': titleEmoji = '🔒'; color = Colors.Red; titleText = 'تيكيت مغلق'; break;
+            case 'ticket_claimed': titleEmoji = '✅'; color = Colors.Orange; titleText = 'تيكيت مستلم'; break;
+            case 'ticket_reopened': titleEmoji = '🔓'; color = Colors.Yellow; titleText = 'تيكيت مفتوح'; break;
+            case 'ticket_deleted': titleEmoji = '🗑️'; color = Colors.DarkRed; titleText = 'تيكيت محذوف'; break;
+            case 'spam_detected': titleEmoji = '❌'; color = Colors.Orange; titleText = 'محاولة سبام'; break;
+            case 'old_ticket_cleaned': titleEmoji = '🧹'; color = Colors.Green; titleText = 'تيكيت قديم نظف'; break;
+            case 'db_error': titleEmoji = '❌'; color = Colors.Red; titleText = 'خطأ قاعدة بيانات'; break;
+            case 'defer_failed': titleEmoji = '⚠️'; color = Colors.Red; titleText = 'فشل defer'; break;
         }
+
+        const embed = new EmbedBuilder()
+            .setTitle(`${titleEmoji} ${titleText}`)
+            .setColor(color)
+            .addFields(
+                { name: '👤 المستخدم', value: `<@${data.userId || 'غير معروف'}>`, inline: true },
+                { name: '🎟️ التيكيت', value: data.ticketId ? `#${data.ticketId}` : data.channel ? `<#${data.channel}>` : 'N/A', inline: true },
+                { name: '📝 التفاصيل', value: data.details || 'بدون تفاصيل', inline: false }
+            )
+            .setFooter({ text: 'Ticket System v2.0' })
+            .setTimestamp();
+
+        await logChannel.send({ embeds: [embed] });
     } catch (err) {
-        console.error('Log send failed:', err);
+        console.error('CRITICAL: Structured log failed:', err); // Fallback only
     }
 };
+
 
