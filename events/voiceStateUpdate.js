@@ -158,7 +158,7 @@ export default async (oldState, newState) => {
                 .setTitle('👑 لوحة تحكم الغرفة الملكية')
                 .setDescription(`مرحباً بك مجدداً! تم استعادة إعدادات غرفتك السابقة تلقائياً.\n\n**الإعدادات الحالية:**\n• **الاسم**: ${channelName}\n• **العدد**: ${limitText}\n• **الخصوصية**: ${privacyText}\n• **القفل**: ${lockText}\n• **الإخفاء**: ${hideText}`)
                 .setColor('#FFD700')
-                .setImage('https://bot-production-5d5b.up.railway.app/bg.png');
+                .setImage('attachment://pvc_guide.png');
 
 
             const row1 = new ActionRowBuilder().addComponents(
@@ -182,7 +182,7 @@ export default async (oldState, newState) => {
                 content: `<@${member.id}>`,
                 embeds: [embed],
                 components: [row1, row2, row3],
-                files: [{ attachment: 'imgs/EditMessage.png', name: 'EditMessage.png' }]
+                files: [{ attachment: 'imgs/pvc_guide.png', name: 'pvc_guide.png' }]
             }).catch(err => console.error('[VC Panel Send Fail]:', err));
             console.log('[VC Panel] Sent successfully');
 

@@ -141,9 +141,10 @@ client.once('ready', async () => {
 
     const rest = new REST({ version: '10' }).setToken(config.token);
     try {
-        console.log('Started refreshing application (/) commands.');
+        const guildId = '1494164519801590031'; // Guild Specific Registration
+        console.log(`Started refreshing application (/) commands for guild: ${guildId}`);
         await rest.put(
-            Routes.applicationCommands(client.user.id),
+            Routes.applicationGuildCommands(client.user.id, guildId),
             { body: commands },
         );
         console.log('Successfully reloaded application (/) commands.');
