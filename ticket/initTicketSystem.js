@@ -3,38 +3,49 @@ import config from '../config/config.js';
 import { createTicketRow } from './buttonsHandler.js';
 
 export const initTicketSystem = async (client, config) => {
-    console.log('🎫 Initializing ticket system...');
+    console.log('🔄 [TICKET INIT] Starting...');
     try {
-        const channel = client.channels.cache.get(config.ticketChannelId);
+        const channel = await client.channels.fetch(config.ticketChannelId).catch(() => null);
         if (!channel) {
-            console.log('❌ Ticket channel not found:', config.ticketChannelId);
+            console.error('❌ [TICKET INIT] Channel not found:', config.ticketChannelId);
             return;
         }
-        console.log('✅ Ticket channel found:', config.ticketChannelId);
+        console.log('✅ [TICKET INIT] Channel:', channel.name);
 
-        const messages = await channel.messages.fetch({ limit: 10 });
-        const existingTicketMsg = messages.find(msg => 
-            msg.embeds.length > 0 && 
-            msg.embeds[0].title?.includes('عاوز تقدم شكوى') &&
-            msg.components.length > 0
+        // Clear old ticket messages
+        const messages = await channel.messages.fetch({ limit: 50 });
+        await Promise.all(
+            messages.filter(msg => msg.author.id === client.user.id).map(msg => 
+                msg.delete().catch(console.error)
+            )
         );
 
-        if (!existingTicketMsg) {
-            const embed = new EmbedBuilder()
-                .setTitle('🎫 عاوز تقدم شكوى؟')
-                .setColor(Colors.Blurple)
-                .setTimestamp();
+        const embed = new EmbedBuilder()
+            .setTitle('🎫 عاوز تقدم شكوى؟')
+            .setColor('Blurple')
+            .setTimestamp();
 
-            await channel.send({ 
-                embeds: [embed], 
-                components: [createTicketRow()] 
-            });
-            console.log('✅ Ticket message sent successfully');
-        } else {
-            console.log('✅ Ticket system already initialized');
-        }
+        const msg = await channel.send({ 
+            embeds: [embed], 
+            components: [createTicketRow()] 
+        });
+
+        console.log('✅ [TICKET INIT] Message sent ID:', msg.id);
+        // Refresh components every 6 hours (Discord button limit)
+        setInterval(async () => {
+            try {
+                const freshMsg = await channel.messages.fetch(msg.id);
+                if (freshMsg.components.length === 0) {
+                    await freshMsg.edit({ components: [createTicketRow()] });
+                    console.log('🔄 [TICKET] Button refreshed');
+                }
+            } catch (e) {
+                console.error('Button refresh failed:', e);
+            }
+        }, 6 * 60 * 60 * 1000); // 6 hours
     } catch (error) {
-        console.error('❌ Error sending ticket message:', error);
+        console.error('❌ [TICKET INIT ERROR]:', error);
     }
 };
+
 
