@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const ticketSchema = new mongoose.Schema({
     guildId: { type: String, required: true, index: true },
-    ticketId: { type: Number, required: true, unique: true },
+    ticketId: { type: Number, required: true },
     userId: { type: String, required: true },
     channelId: { type: String, required: true },
     status: { type: String, enum: ['open', 'closed'], default: 'open' },
@@ -13,6 +13,8 @@ const ticketSchema = new mongoose.Schema({
     closedAt: { type: Date },
     logData: { type: mongoose.Schema.Types.Mixed }
 });
+
+ticketSchema.index({ guildId: 1, ticketId: 1 }, { unique: true });
 
 export default mongoose.model('Ticket', ticketSchema);
 

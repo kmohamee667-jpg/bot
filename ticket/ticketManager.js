@@ -21,6 +21,7 @@ const allowedRoles = config.allowedTicketRoles;
 
 
 export const handleCreateTicket = async (interaction) => {
+    console.log('🎫 handleCreateTicket called for user:', interaction.user.id);
     const guildId = interaction.guild.id;
     const userId = interaction.user.id;
     
@@ -29,6 +30,7 @@ export const handleCreateTicket = async (interaction) => {
     if (openTicket) {
         return interaction.reply({ content: 'لديك تيكيت مفتوح بالفعل!', ephemeral: true });
     }
+    console.log('✅ No open ticket found, proceeding...');
 
     const confirmEmbed = new EmbedBuilder()
         .setTitle('🎫 تأكيد')
@@ -40,6 +42,7 @@ export const handleCreateTicket = async (interaction) => {
         components: [closeConfirmRow()], 
         ephemeral: true 
     });
+    console.log('✅ Confirmation embed sent');
 };
 
 export const confirmTicketCreation = async (interaction) => {

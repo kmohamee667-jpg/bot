@@ -31,6 +31,7 @@ export const getUserOpenTicket = async (userId, guildId) => {
     console.log('🔄 Checking open ticket for user', userId, 'in guild', guildId);
     try {
         const ticket = await Ticket.findOne({ userId, guildId, status: 'open' });
+        console.log('Query result:', ticket);
         console.log('Open ticket found?', !!ticket);
         return ticket;
     } catch (error) {
