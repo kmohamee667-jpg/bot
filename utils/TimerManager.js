@@ -82,12 +82,19 @@ class TimerManager {
         const seconds = Math.floor((remainingMs % 60000) / 1000);
         const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
+        // Fetch latest channel info for member count
+        const channel = interaction.guild.channels.cache.get(interaction.channelId);
+        const memberCount = channel?.members.size || 0;
+        const channelName = channel?.name || 'الغرفة الصوتية';
+
         const imageBuffer = await generateTimerImage(timeString, percentage, theme);
         const attachment = new AttachmentBuilder(imageBuffer, { name: 'timer.png' });
 
+        const themeIcon = theme.name === 'sunset' ? '🌅' : '⏱️';
+
         const embed = new EmbedBuilder()
             .setTitle(`⏱️ ${session.status === 'study' ? 'وقت الدراسة' : 'وقت الراحة'} - دورة ${session.currentCycle}/${session.totalCycles}`)
-            .setDescription(`>>> **بدأ بواسطة:** <@${session.startedBy}>\n**الحالة:** ${session.status === 'study' ? '📖 دراسة بتركيز' : '☕ استراحة قصيرة'}`)
+            .setDescription(`>>> **الروم:** \`${channelName}\`\n**الأعضاء:** \`${memberCount}\` عضو\n**الثيم:** ${themeIcon} \`${theme.name}\`\n\n**بدأ بواسطة:** <@${session.startedBy}>\n**الحالة:** ${session.status === 'study' ? '📖 دراسة بتركيز' : '☕ استراحة قصيرة'}`)
             .setImage('attachment://timer.png')
             .setColor(session.status === 'study' ? '#FF4500' : '#00FF7F')
             .setFooter({ text: `تحديث كل 10 ثوانٍ • فكر في هدفك!` });

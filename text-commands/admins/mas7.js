@@ -24,18 +24,31 @@ export default async (message, args) => {
 
     let deleteCount = 0;
     try {
-        if (!args[0]) {
-            const fetched = await message.channel.messages.fetch({ limit: 100 });
-            await message.channel.bulkDelete(fetched, true);
-            deleteCount = fetched.size;
-        } else if (!isNaN(args[0])) {
-            let count = parseInt(args[0]);
-            if (count > 100) count = 100;
-            const fetched = await message.channel.messages.fetch({ limit: count });
-            await message.channel.bulkDelete(fetched, true);
-            deleteCount = fetched.size;
-        } else {
-            return message.reply('يرجى كتابة رقم صحيح بعد الأمر.');
+        // Find essential messages to preserve
+        const timerSession = await (await import('../../models/TimerSession.js')).default.findOne({ channelId: message.channel.id });
+        const timerMsgId = timerSession?.messageId;
+
+        const limit = args[0] && !isNaN(args[0]) ? Math.min(parseInt(args[0]), 100) : 100;
+        const fetched = await message.channel.messages.fetch({ limit });
+
+        // Filter messages to DELETE (exclude timer and control panel)
+        const toDelete = fetched.filter(msg => {
+            // Keep the current command message
+            if (msg.id === message.id) return false;
+            
+            // Keep the active timer message
+            if (timerMsgId && msg.id === timerMsgId) return false;
+
+            // Keep the Voice Control Panel (Identify by Title/Header)
+            const hasPanelTitle = msg.embeds.some(e => e.title?.includes('لوحة تحكم الغرفة الملكية'));
+            if (hasPanelTitle && msg.author.id === message.client.user.id) return false;
+
+            return true;
+        });
+
+        if (toDelete.size > 0) {
+            await message.channel.bulkDelete(toDelete, true);
+            deleteCount = toDelete.size;
         }
     } catch (err) {
         console.error('خطأ أثناء تنفيذ المسح:', err);

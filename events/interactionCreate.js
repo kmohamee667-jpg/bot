@@ -211,10 +211,9 @@ export default async (interaction) => {
             }
 
             TimerManager.stopTimer(interaction.channelId);
-            session.status = 'finished';
-            await session.save();
+            await TimerSession.deleteOne({ _id: session._id });
 
-            await interaction.reply({ content: `✅ تم إيقاف التايمر بواسطة <@${interaction.user.id}>.` });
+            await interaction.reply({ content: `✅ تم إيقاف التايمر ومسح البيانات بواسطة <@${interaction.user.id}>.` });
         }
     }
 

@@ -19,7 +19,7 @@ try {
  */
 export async function generateTimerImage(timeString, percentage, theme = {}) {
     const width = 800; // Rectangular
-    const height = 400;
+    const height = 450;
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
@@ -41,16 +41,16 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
     }
 
     // 2. Stronger Dark Overlay for better contrast
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
     ctx.fillRect(0, 0, width, height);
 
     const centerX = width / 2;
     const centerY = height / 2;
-    const radius = 160;
+    const radius = 180; // Larger circle
 
     // 3. Draw Static Background Circle (Track)
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = 12;
+    ctx.lineWidth = 14;
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
     ctx.stroke();
@@ -58,7 +58,7 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
     // 4. Draw Progress Arc (White, No Glow)
     ctx.save();
     ctx.strokeStyle = circleColor;
-    ctx.lineWidth = 15;
+    ctx.lineWidth = 16;
     ctx.lineCap = 'round';
 
     const startAngle = -Math.PI / 2; // Top
@@ -75,18 +75,18 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
     ctx.fillStyle = textColor;
     
     // Shadows for maximum visibility
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 12;
     ctx.shadowColor = 'rgba(0, 0, 0, 1)';
     ctx.shadowOffsetX = 3;
     ctx.shadowOffsetY = 3;
 
-    // A. Countdown Timer
-    ctx.font = `bold 140px "${font}", Arial`; // Using the custom font
-    ctx.fillText(timeString, centerX, centerY - 15);
+    // A. Countdown Timer (Smaller Font)
+    ctx.font = `bold 110px "${font}", Arial`; 
+    ctx.fillText(timeString, centerX, centerY - 10);
 
-    // B. Motivational Text "KEEP GOING"
-    ctx.font = `italic 45px "${font}", Arial`;
-    ctx.fillText('KEEP GOING', centerX, centerY + 85);
+    // B. Motivational Text "KEEP GOING" (Smaller Font)
+    ctx.font = `italic 32px "${font}", Arial`;
+    ctx.fillText('KEEP GOING', centerX, centerY + 80);
 
     return canvas.toBuffer('image/png');
 }
