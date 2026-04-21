@@ -128,7 +128,19 @@ client.once('clientReady', async () => {
     console.log(`✅ Bot ready as ${client.user.tag}`);
     await initTicketSystem(client, config);
 
-    // --- REGISTER SLASH COMMANDS ---
+    await initTicketSystem(client, config);
+
+    // --- WHITELIST CLEANUP (LEAVE UNAUTHORIZED GUILDS) ---
+    const unauthorized = client.guilds.cache.filter(g => !config.allowedServers.includes(g.id));
+    if (unauthorized.size > 0) {
+        console.log(`⚠️ Found ${unauthorized.size} unauthorized guilds on startup. Leaving...`);
+        unauthorized.forEach(g => {
+            console.log(`- Leaving: ${g.name} (${g.id})`);
+            g.leave().catch(() => {});
+        });
+    }
+
+    // --- REGISTER SLASH COMMANDS (ONLY FOR WHITELISTED GUILDS) ---
     const commands = [
         new SlashCommandBuilder()
             .setName('coins')
@@ -167,17 +179,30 @@ client.once('clientReady', async () => {
                     .setRequired(true)),
     ].map(command => command.toJSON());
 
-    const rest = new REST({ version: '10' }).setToken(config.token);
     try {
-        const guildId = '1494164519801590031'; // Guild Specific Registration
-        console.log(`Started refreshing application (/) commands for guild: ${guildId}`);
-        await rest.put(
-            Routes.applicationGuildCommands(client.user.id, guildId),
-            { body: commands },
-        );
-        console.log('Successfully reloaded application (/) commands.');
-    } catch (error) {
-        console.error('Failed to register slash commands:', error);
+        const rest = new REST({ version: '10' }).setToken(config.token);
+        for (const guildId of config.allowedServers) {
+            try {
+                console.log(`Started refreshing application (/) commands for guild: ${guildId}`);
+                await rest.put(
+                    Routes.applicationGuildCommands(client.user.id, guildId),
+                    { body: commands },
+                );
+                console.log(`Successfully reloaded commands for guild: ${guildId}`);
+            } catch (error) {
+                console.error(`Failed to register slash commands for guild: ${guildId}`, error);
+            }
+        }
+    } catch (err) {
+        console.error('Error in command registration:', err);
+    }
+});
+
+// --- AUTO-LEAVE ON JOIN (UNAUTHORIZED GUILDS) ---
+client.on('guildCreate', (guild) => {
+    if (!config.allowedServers.includes(guild.id)) {
+        console.log(`⚠️ Rejected unauthorized guild: ${guild.name} (${guild.id}). Leaving...`);
+        guild.leave().catch(() => {});
     }
 });
 
@@ -207,6 +232,9 @@ const COMMAND_MAP = {
 // --- MESSAGE HANDLER ---
 client.on('messageCreate', async (message) => {
     if (!message.guild || message.author.bot) return;
+
+    // --- WHITELIST GUARD ---
+    if (!config.allowedServers.includes(message.guild.id)) return;
 
     const args = message.content.trim().split(/ +/);
     const rawCommand = args[0].toLowerCase();

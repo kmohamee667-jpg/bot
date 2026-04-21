@@ -3,6 +3,7 @@ dotenv.config();
 
 const config = {
     token: process.env.BOT_TOKEN,
+    allowedServers: (process.env.ALLOW_SERVER || '').split(',').map(id => id.trim()).filter(id => id.length > 0),
     welcomeChannel: '1494164521038905397',
     // Ticket System Config
     ticketChannelId: '1494164521885892735',

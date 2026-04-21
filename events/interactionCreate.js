@@ -22,6 +22,9 @@ async function getAdminData() {
 }
 
 export default async (interaction) => {
+    // --- WHITELIST GUARD ---
+    if (interaction.guild && !config.allowedServers.includes(interaction.guild.id)) return;
+
     console.log('🤖 Interaction received:', interaction.customId, interaction.channelId);
     
     if (!interaction.guild) return;
