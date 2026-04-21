@@ -39,7 +39,7 @@ class TimerManager {
                     backgroundPath: path.join(__dirname, '../imgs/timer_foucs.png'),
                     circleColor: '#FFFFFF',
                     textColor: '#FFFFFF',
-                    font: 'Super Squad',
+                    font: 'Sports World',
                     showCircle: false,
                     motivationalText: 'STAY FOCUSED',
                     glowColor: 'rgba(255, 255, 255, 0)'
