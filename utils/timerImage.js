@@ -4,6 +4,13 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Register Custom Font
+try {
+    GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/Welcome Darling.otf'), 'Welcome Darling');
+} catch (err) {
+    console.error('[Font Registration Error]:', err);
+}
+
 /**
  * Generates a Pomodoro Timer image with a circular progress bar and countdown text.
  * @param {string} timeString - Format "MM:SS"
@@ -20,7 +27,7 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
         backgroundPath = path.join(__dirname, '../imgs/timer_sunset.png'),
         circleColor = '#FFFFFF', // Default White
         textColor = '#FFFFFF',
-        font = 'Arial' // Use standard Arial
+        font = 'Welcome Darling' // Use our new premium font!
     } = theme;
 
     // 1. Background
@@ -39,7 +46,7 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
 
     const centerX = width / 2;
     const centerY = height / 2;
-    const radius = 160; // Adjusted for 400 height
+    const radius = 160;
 
     // 3. Draw Static Background Circle (Track)
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
@@ -62,21 +69,24 @@ export async function generateTimerImage(timeString, percentage, theme = {}) {
     ctx.stroke();
     ctx.restore();
 
-    // 5. Draw Countdown Text (Fix: Use standard font, and draw LAST to be on top)
+    // 5. Text Rendering
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = textColor;
     
-    // Explicitly using Arial and providing a fail-proof string
-    ctx.font = `bold 100px Arial`;
-    
-    // Extra shadow for the text itself to ensure visibility
+    // Shadows for maximum visibility
     ctx.shadowBlur = 10;
     ctx.shadowColor = 'rgba(0, 0, 0, 1)';
     ctx.shadowOffsetX = 3;
     ctx.shadowOffsetY = 3;
-    
-    ctx.fillText(timeString, centerX, centerY);
+
+    // A. Countdown Timer
+    ctx.font = `bold 140px "${font}", Arial`; // Using the custom font
+    ctx.fillText(timeString, centerX, centerY - 15);
+
+    // B. Motivational Text "KEEP GOING"
+    ctx.font = `italic 45px "${font}", Arial`;
+    ctx.fillText('KEEP GOING', centerX, centerY + 85);
 
     return canvas.toBuffer('image/png');
 }

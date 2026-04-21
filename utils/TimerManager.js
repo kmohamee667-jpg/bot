@@ -3,6 +3,10 @@ import { generateTimerImage } from './timerImage.js';
 import TimerSession from '../models/TimerSession.js';
 import TimerTheme from '../models/TimerTheme.js';
 import PrivateVC from '../models/PrivateVC.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 class TimerManager {
     constructor() {
