@@ -102,19 +102,31 @@ export const claimedInClaimChannelEmbed = (ticket, claimer) => {
 
 export const claimedInTicketEmbed = (claimer, ticket) => {
   return new EmbedBuilder()
-    .setAuthor({
-      name: `تم استلام التيكيت بواسطة ${claimer.username}`,
-      iconURL: claimer.displayAvatarURL({ dynamic: true })
-    })
-    .setTitle('🤝 فريق الدعم معك الآن')
-    .setDescription(`أهلاً بك <@${ticket.userId}>، لقد تولى الإداري **${claimer.username}** مسؤولية التيكيت الخاص بك وسيقوم بمساعدتك في أقرب وقت.`)
+    .setTitle('✅ تم استلام التيكيت')
+    .setDescription(`**أهلاً بك <@${ticket.userId}>، لقد استلم الإداري طلبك وسيتم الرد عليك في أقرب وقت.**`)
     .addFields(
       { name: '👤 المستلم', value: `<@${claimer.id}>`, inline: true },
-      { name: '🏷️ رقم التيكيت', value: `\`#${ticket.ticketId}\``, inline: true }
+      { name: '🏷️ رقم التيكيت', value: `\`#${ticket.ticketId}\``, inline: true },
+      { name: '🕒 وقت الاستلام', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: false }
     )
+    .setThumbnail(claimer.displayAvatarURL({ dynamic: true, size: 512 }))
     .setImage(claimer.displayAvatarURL({ dynamic: true, size: 512 }))
     .setColor(0x3498DB) // Blue
-    .setFooter({ text: 'نحن هنا للمساعدة!', iconURL: claimer.displayAvatarURL({ dynamic: true }) })
+    .setFooter({ text: 'نتمنى لك تجربة سعيدة!', iconURL: claimer.displayAvatarURL({ dynamic: true }) })
+    .setTimestamp();
+};
+
+export const ticketClosedDMEmbed = (ticket, closer, guild) => {
+  return new EmbedBuilder()
+    .setTitle('🔒 تم إغلاق التيكيت الخاص بك')
+    .setDescription(`نود إعلامك بأنه تم إغلاق التيكيت الخاص بك في سيرفر **${guild.name}**.`)
+    .addFields(
+      { name: '🆔 رقم التيكيت', value: `\`#${ticket.ticketId}\``, inline: true },
+      { name: '👤 أغلق بواسطة', value: `<@${closer.id}>`, inline: true },
+      { name: '🕒 وقت الإغلاق', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false }
+    )
+    .setColor(0xE74C3C) // Red
+    .setFooter({ text: `شكراً لتواصلك معنا في ${guild.name}` })
     .setTimestamp();
 };
 

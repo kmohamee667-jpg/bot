@@ -10,7 +10,7 @@ import {
 import { initTicketSystem } from './initTicketSystem.js';
 
 import config from '../config/config.js';
-import { createTicketRow, userCloseRow, closeConfirmRow, closeConfirmRowClose, ticketControlsRow, supportControlsRow, closedEmbed, claimPromptRow, claimPromptEmbed, claimedInTicketEmbed, claimedInClaimChannelEmbed } from './buttonsHandler.js';
+import { createTicketRow, userCloseRow, closeConfirmRow, closeConfirmRowClose, ticketControlsRow, supportControlsRow, closedEmbed, claimPromptRow, claimPromptEmbed, claimedInTicketEmbed, claimedInClaimChannelEmbed, ticketClosedDMEmbed } from './buttonsHandler.js';
 import { getNextTicketId, createTicket, getUserOpenTicket, getTicketByChannelId, updateTicketStatus, claimTicket, updateClaimPromptMessageId } from './database.js';
 
 export { initTicketSystem };
@@ -183,8 +183,16 @@ export const executeCloseTicket = async (interaction) => {
     // Move user to welcome channel if in voice
     const welcomeChannel = interaction.guild.channels.cache.get(config.welcomeChannel);
     const member = await interaction.guild.members.fetch(ticket.userId).catch(() => null);
-    if (member && member.voice.channel) {
-        await member.voice.setChannel(welcomeChannel).catch(() => {});
+    
+    // Send DM to user
+    if (member) {
+        await member.send({ embeds: [ticketClosedDMEmbed(ticket, interaction.user, interaction.guild)] }).catch(() => {
+            console.log(`Could not send DM to user ${ticket.userId}`);
+        });
+
+        if (member.voice.channel) {
+            await member.voice.setChannel(welcomeChannel).catch(() => {});
+        }
     }
 
     // Update DB
