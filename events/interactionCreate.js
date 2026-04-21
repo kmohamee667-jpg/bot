@@ -558,23 +558,38 @@ export default async (interaction) => {
 
     // 6. Handle Autocomplete (Themes)
     if (interaction.isAutocomplete()) {
-        const focusedValue = interaction.options.getFocused();
+        const focusedValue = interaction.options.getFocused().toLowerCase();
         const TimerTheme = (await import('../models/TimerTheme.js')).default;
-        const themes = await TimerTheme.find({ name: { $regex: focusedValue, $options: 'i' } }).limit(25);
         
-        const choices = themes.map(theme => {
-            let label = theme.name.charAt(0).toUpperCase() + theme.name.slice(1);
-            if (theme.name === 'sunset') label = `🌅 Sunset`;
-            if (theme.name === 'focus') label = `🎯 Focus`;
-            return { name: label, value: theme.name };
+        // 1. Define hardcoded defaults
+        const defaultThemes = [
+            { name: '🌅 Sunset', value: 'sunset' },
+            { name: '🎯 Focus', value: 'focus' }
+        ];
+
+        // 2. Fetch all themes from DB
+        const dbThemes = await TimerTheme.find({}).catch(() => []);
+        
+        // 3. Map DB themes to choices format
+        const dbChoices = dbThemes.map(theme => ({
+            name: `${theme.name === 'sunset' ? '🌅' : theme.name === 'focus' ? '🎯' : '🎨'} ${theme.name.charAt(0).toUpperCase() + theme.name.slice(1)}`,
+            value: theme.name
+        }));
+
+        // 4. Merge (Avoid duplicates from DB if they are defaults)
+        const allChoices = [...defaultThemes];
+        dbChoices.forEach(dbChoice => {
+            if (!allChoices.find(c => c.value === dbChoice.value)) {
+                allChoices.push(dbChoice);
+            }
         });
 
-        // Default suggestions if nothing in DB yet
-        if (choices.length === 0) {
-            choices.push({ name: '🌅 Sunset', value: 'sunset' });
-            choices.push({ name: '🎯 Focus', value: 'focus' });
-        }
+        // 5. Filter by focusedValue
+        const filtered = allChoices.filter(choice => 
+            choice.name.toLowerCase().includes(focusedValue) || 
+            choice.value.toLowerCase().includes(focusedValue)
+        ).slice(0, 25);
 
-        await interaction.respond(choices).catch(() => {});
+        await interaction.respond(filtered).catch(() => {});
     }
 };
