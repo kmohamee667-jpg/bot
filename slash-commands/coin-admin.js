@@ -50,6 +50,7 @@ export async function handleCoinAdminSlash(interaction) {
                 const logEmbed = new EmbedBuilder()
                     .setAuthor({ name: `إضافة كوينات | ${target.username}`, iconURL: author.displayAvatarURL() })
                     .setColor(Colors.Green)
+                    .setThumbnail(target.displayAvatarURL({ dynamic: true }))
                     .addFields(
                         { name: '👤 المستلم', value: `<@${target.id}>`, inline: true },
                         { name: '👮 بواسطة', value: `<@${author.id}>`, inline: true },
@@ -80,6 +81,7 @@ export async function handleCoinAdminSlash(interaction) {
                 const logEmbed = new EmbedBuilder()
                     .setAuthor({ name: `خصم كوينات | ${target.username}`, iconURL: author.displayAvatarURL() })
                     .setColor(Colors.Red)
+                    .setThumbnail(target.displayAvatarURL({ dynamic: true }))
                     .addFields(
                         { name: '👤 العضو', value: `<@${target.id}>`, inline: true },
                         { name: '👮 بواسطة', value: `<@${author.id}>`, inline: true },
@@ -103,6 +105,7 @@ export async function handleCoinAdminSlash(interaction) {
                     const logEmbed = new EmbedBuilder()
                         .setAuthor({ name: `تصفير كوينات | ${target.username}`, iconURL: author.displayAvatarURL() })
                         .setColor(Colors.Black)
+                        .setThumbnail(target.displayAvatarURL({ dynamic: true }))
                         .addFields(
                             { name: '👤 العضو', value: `<@${target.id}>`, inline: true },
                             { name: '👮 بواسطة', value: `<@${author.id}>`, inline: true }
