@@ -11,7 +11,8 @@ const ticketSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     closedBy: { type: String },
     closedAt: { type: Date },
-    logData: { type: mongoose.Schema.Types.Mixed }
+    logData: { type: mongoose.Schema.Types.Mixed },
+    claimPromptMessageId: { type: String, default: null }
 });
 
 ticketSchema.index({ guildId: 1, ticketId: 1 }, { unique: true });

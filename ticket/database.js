@@ -68,3 +68,11 @@ export const claimTicket = async (channelId, claimerId) => {
     );
 };
 
+export const updateClaimPromptMessageId = async (channelId, messageId) => {
+    return await Ticket.findOneAndUpdate(
+        { channelId },
+        { claimPromptMessageId: messageId },
+        { new: true }
+    );
+};
+

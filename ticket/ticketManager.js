@@ -10,8 +10,8 @@ import {
 import { initTicketSystem } from './initTicketSystem.js';
 
 import config from '../config/config.js';
-import { createTicketRow, userCloseRow, closeConfirmRow, closeConfirmRowClose, ticketControlsRow, supportControlsRow, closedEmbed } from './buttonsHandler.js';
-import { getNextTicketId, createTicket, getUserOpenTicket, getTicketByChannelId, updateTicketStatus, claimTicket } from './database.js';
+import { createTicketRow, userCloseRow, closeConfirmRow, closeConfirmRowClose, ticketControlsRow, supportControlsRow, closedEmbed, claimPromptRow, claimPromptEmbed, claimedInTicketEmbed, claimedInClaimChannelEmbed } from './buttonsHandler.js';
+import { getNextTicketId, createTicket, getUserOpenTicket, getTicketByChannelId, updateTicketStatus, claimTicket, updateClaimPromptMessageId } from './database.js';
 
 export { initTicketSystem };
 
@@ -90,9 +90,10 @@ export const confirmTicketCreation = async (interaction) => {
                 id: userId,
                 allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory]
             },
+            // Management initially CANNOT see the ticket
             ...allowedRoles.map(roleId => ({
                 id: roleId,
-                allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.ManageChannels]
+                deny: [PermissionFlagsBits.ViewChannel]
             }))
         ]
     });
@@ -111,26 +112,35 @@ export const confirmTicketCreation = async (interaction) => {
     // Mention msg separate
     await channel.send(`<@${userId}> Please wait for support team response... 🎫`);
 
-    // Welcome + Claim row (admins only see claim)
+    // Welcome Row (No claim button here anymore)
     const welcomeRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('ticket_close').setLabel('Close Ticket').setEmoji('🔒').setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId('ticket_claim').setLabel('Claim Ticket').setEmoji('✅').setStyle(ButtonStyle.Primary)
+        new ButtonBuilder().setCustomId('ticket_close').setLabel('إغلاق التيكيت').setEmoji('🔒').setStyle(ButtonStyle.Danger)
     );
+    
     const welcome = new EmbedBuilder()
-        .setTitle('🎫 Welcome!')
-        .setDescription('Support team will reply soon.\nPress Close to end ticket.')
-        .setFooter({ text: `Created by ${interaction.client.user.tag}` })
+        .setTitle('🎫 مرحباً بك!')
+        .setDescription(`أهلاً بك <@${userId}>، سيتم الرد عليك قريباً من قبل فريق الدعم.\nيمكنك الضغط على الزر أدناه لإغلاق التيكيت إذا انتهيت.`)
+        .setColor(Colors.Blue)
         .setTimestamp();
+
     await channel.send({
         embeds: [welcome],
         components: [welcomeRow]
     });
 
-    // Ping admins
-    const pingRoles = allowedRoles.map(roleId => `<@&${roleId}>`).join(' ');
-    await channel.send(pingRoles);
+    await interaction.update({ content: `تم فتح التيكيت بنجاح: ${channel} 🎫`, components: [], embeds: [] });
 
-    await interaction.update({ content: `Your ticket created: ${channel}`, components: [], embeds: [] });
+    // Send Claim Prompt to management channel
+    const claimChannel = interaction.guild.channels.cache.get(config.claimChannelId);
+    if (claimChannel) {
+        const pingRoles = allowedRoles.map(roleId => `<@&${roleId}>`).join(' ');
+        const promptMsg = await claimChannel.send({
+            content: `📢 تيكيت جديد بانتظار الاستلام! ${pingRoles}`,
+            embeds: [claimPromptEmbed(ticket)],
+            components: [claimPromptRow()]
+        });
+        await updateClaimPromptMessageId(channel.id, promptMsg.id);
+    }
 
     // Log
     await sendStructuredLog(interaction.guild, 'ticket_created', { userId, ticketId, channel: channel.id });
@@ -205,35 +215,61 @@ export const executeCloseTicket = async (interaction) => {
 };
 
 export const handleClaimTicket = async (interaction) => {
-    const ticket = await getTicketByChannelId(interaction.channelId);
-    if (ticket.claimedBy) {
+    const ticket = await getTicketByChannelId(interaction.channelId || interaction.message.channelId); // Handle both in-ticket and claim-channel buttons
+    
+    // Find the actual ticket if the interaction is from the claim channel
+    let targetTicket = ticket;
+    if (!targetTicket && interaction.channelId === config.claimChannelId) {
+        // If interaction came from claim channel, we need to find the ticket by the message ID
+        // (Wait, database.js doesn't have getTicketByClaimMessageId, but we can search for it)
+        const TicketModel = (await import('../models/Ticket.js')).default;
+        targetTicket = await TicketModel.findOne({ claimPromptMessageId: interaction.message.id });
+    }
+
+    if (!targetTicket) {
+        return interaction.reply({ content: 'عذراً، لم يتم العثور على التيكيت فى قاعدة البيانات.', ephemeral: true });
+    }
+
+    if (targetTicket.claimedBy) {
         const claimedEmbed = new EmbedBuilder()
-            .setDescription(`Ticket already claimed by <@${ticket.claimedBy}>!`)
+            .setDescription(`عذراً، هذا التيكيت تم استلامه بالفعل من قبل <@${targetTicket.claimedBy}>!`)
             .setColor('Yellow');
         return interaction.reply({ embeds: [claimedEmbed], ephemeral: true });
     }
 
-    const newTicket = await claimTicket(interaction.channelId, interaction.user.id);
+    const newTicket = await claimTicket(targetTicket.channelId, interaction.user.id);
     if (!newTicket) {
-        const claimErrEmbed = new EmbedBuilder()
-            .setDescription('Claim failed!')
-            .setColor('Red');
-        return interaction.reply({ embeds: [claimErrEmbed], ephemeral: true });
+        return interaction.reply({ content: 'فشل استلام التيكيت، ربما استلمه شخص آخر بالفعل.', ephemeral: true });
     }
 
-    // Restore user perms
-    await interaction.channel.permissionOverwrites.edit(ticket.userId, {
-        ViewChannel: true,
-        SendMessages: true,
-        ReadMessageHistory: true
-    });
+    const ticketChannel = interaction.guild.channels.cache.get(targetTicket.channelId);
+    if (ticketChannel) {
+        // Reveal channel to all management roles
+        for (const roleId of allowedRoles) {
+            await ticketChannel.permissionOverwrites.edit(roleId, {
+                ViewChannel: true,
+                SendMessages: true,
+                ReadMessageHistory: true,
+                ManageChannels: true
+            }).catch(e => console.error(`Failed to update perms for role ${roleId}:`, e));
+        }
 
-    const claimSuccessEmbed = new EmbedBuilder()
-        .setDescription('✅ Ticket claimed!')
-        .setColor('Green');
-    await interaction.reply({ embeds: [claimSuccessEmbed], ephemeral: true });
+        // Send claim embed in ticket channel
+        await ticketChannel.send({ embeds: [claimedInTicketEmbed(interaction.user, targetTicket)] });
+    }
 
-    await sendStructuredLog(interaction.guild, 'ticket_claimed', { userId: interaction.user.id, ticketId: ticket.ticketId, channel: interaction.channelId });
+    // Update claim message in claim channel
+    if (interaction.channelId === config.claimChannelId) {
+        await interaction.update({
+            content: `✅ تم استلام التيكيت بواسطة <@${interaction.user.id}>`,
+            embeds: [claimedInClaimChannelEmbed(targetTicket, interaction.user)],
+            components: [] // Hide buttons
+        });
+    } else {
+        await interaction.reply({ content: '✅ تم استلام التيكيت بنجاح!', ephemeral: true });
+    }
+
+    await sendStructuredLog(interaction.guild, 'ticket_claimed', { userId: interaction.user.id, ticketId: targetTicket.ticketId, channel: targetTicket.channelId });
 };
 
 export const handleReopenTicket = async (interaction) => {

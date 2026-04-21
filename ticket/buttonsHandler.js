@@ -66,30 +66,56 @@ export const closedEmbed = (closer) => {
 };
 
 export const claimPromptEmbed = (ticket) => {
-  const createdAt = ticket.createdAt.toLocaleString('en-US');
+  const createdAt = new Date(ticket.createdAt).toLocaleString('ar-EG', { 
+    year: 'numeric', month: 'long', day: 'numeric', 
+    hour: '2-digit', minute: '2-digit' 
+  });
   return new EmbedBuilder()
-    .setTitle('📥 التيكيت جاهز للاستلام')
-    .setDescription('اضغط الزر لاستلام التيكيت')
+    .setTitle('📥 تيكيت جديد بانتظار الاستلام')
+    .setDescription('**يوجد تيكيت جديد مفتوح يحتاج إلى مراجعة من الإدارة**')
     .addFields(
-      { name: 'رقم التيكيت', value: `#${ticket.ticketId}`, inline: true },
-      { name: 'صاحب التيكيت', value: `<@${ticket.userId}>`, inline: true },
-      { name: 'فتح في', value: createdAt, inline: false }
+      { name: '🆔 رقم التيكيت', value: `\`#${ticket.ticketId}\``, inline: true },
+      { name: '👤 صاحب التيكيت', value: `<@${ticket.userId}>`, inline: true },
+      { name: '🕒 وقت الفتح', value: createdAt, inline: false },
+      { name: '📊 الحالة', value: '⏳ قيد الانتظار', inline: true },
+      { name: '🔒 الرؤية', value: '👻 مخفي عن الإدارة', inline: true }
     )
-    .setColor('Orange')
+    .setColor(0xFFA500) // Orange
+    .setThumbnail('https://cdn-icons-png.flaticon.com/512/2065/2065064.png')
+    .setFooter({ text: 'نظام إدارة التيكتات • يرجى الضغط على الزر أدناه للاستلام' })
     .setTimestamp();
 };
 
-export const claimConfirmEmbed = (ticket, claimer) => {
-  const createdAt = ticket.createdAt.toLocaleString('en-US');
-  const claimedAt = new Date().toLocaleString('en-US');
+export const claimedInClaimChannelEmbed = (ticket, claimer) => {
   return new EmbedBuilder()
-    .setAuthor({
-      name: `<@${claimer}> استلم التيكيت`,
-      iconURL: `https://cdn.discordapp.com/avatars/${claimer}/${interaction.user.displayAvatarURL({ dynamic: true })}`
-    })
     .setTitle('✅ تم استلام التيكيت')
-    .setDescription(`**الاداري:** <@${claimer}>\n**خاصة ب:** <@${ticket.userId}>\n**فتح في:** ${createdAt}\n**استلام في:** ${claimedAt}`)
-    .setColor(0x00AA00)
+    .setDescription(`**لقد قام الإداري <@${claimer.id}> باستلام هذا التيكيت بنجاح.**`)
+    .addFields(
+      { name: '🆔 رقم التيكيت', value: `\`#${ticket.ticketId}\``, inline: true },
+      { name: '👤 المستلم', value: `<@${claimer.id}>`, inline: true },
+      { name: '🕒 وقت الاستلام', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: false }
+    )
+    .setColor(0x00FF00) // Green
+    .setFooter({ text: 'تم تحديث حالة التيكيت' })
     .setTimestamp();
 };
+
+export const claimedInTicketEmbed = (claimer, ticket) => {
+  return new EmbedBuilder()
+    .setAuthor({
+      name: `تم استلام التيكيت بواسطة ${claimer.username}`,
+      iconURL: claimer.displayAvatarURL({ dynamic: true })
+    })
+    .setTitle('🤝 فريق الدعم معك الآن')
+    .setDescription(`أهلاً بك <@${ticket.userId}>، لقد تولى الإداري **${claimer.username}** مسؤولية التيكيت الخاص بك وسيقوم بمساعدتك في أقرب وقت.`)
+    .addFields(
+      { name: '👤 المستلم', value: `<@${claimer.id}>`, inline: true },
+      { name: '🏷️ رقم التيكيت', value: `\`#${ticket.ticketId}\``, inline: true }
+    )
+    .setImage(claimer.displayAvatarURL({ dynamic: true, size: 512 }))
+    .setColor(0x3498DB) // Blue
+    .setFooter({ text: 'نحن هنا للمساعدة!', iconURL: claimer.displayAvatarURL({ dynamic: true }) })
+    .setTimestamp();
+};
+
 
