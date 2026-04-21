@@ -20,6 +20,37 @@ async function getAdminData() {
 export default async (interaction) => {
     if (!interaction.guild) return;
 
+    // Gender role assignment for channel 1494164521038905398
+    if (interaction.channelId === '1494164521038905398') {
+        const member = interaction.member;
+        if (interaction.isButton()) {
+            const maleRole = interaction.guild.roles.cache.find(r => r.name === 'male' || r.name === 'ولاد');
+            const femaleRole = interaction.guild.roles.cache.find(r => r.name === 'female' || r.name === 'بنات');
+
+            if (interaction.customId === 'gender_male') {
+                const hasMale = member.roles.cache.has(maleRole?.id || '');
+                if (!hasMale && maleRole) {
+                    await member.roles.add(maleRole);
+                    await interaction.update({ content: `تم إضافة رول **${maleRole.name}** لك! 👨 ✅`, components: [] });
+                } else {
+                    await interaction.update({ content: 'لديك بالفعل رول الولاد! 👨', components: [] });
+                }
+                return;
+            }
+
+            if (interaction.customId === 'gender_female') {
+                const hasFemale = member.roles.cache.has(femaleRole?.id || '');
+                if (!hasFemale && femaleRole) {
+                    await member.roles.add(femaleRole);
+                    await interaction.update({ content: `تم إضافة رول **${femaleRole.name}** لك! 👩 ✅`, components: [] });
+                } else {
+                    await interaction.update({ content: 'لديك بالفعل رول البنات! 👩', components: [] });
+                }
+                return;
+            }
+        }
+    }
+
     // Check if the server is active in database
     const settings = await GuildSettings.findOne({ guildId: interaction.guild.id });
     if (settings && !settings.active) {
