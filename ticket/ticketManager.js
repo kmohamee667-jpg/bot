@@ -111,13 +111,14 @@ export const confirmTicketCreation = async (interaction) => {
     await channel.send(`<@${userId}> يرجى الانتظار حتى يتم الرد عليك من فريق الدعم... 🎫`);
 
     // Welcome embed
+    const welcome = new EmbedBuilder()
+        .setTitle('🎫 مرحباً بك!')
+        .setDescription('سيتم الرد عليك قريباً من فريق الدعم\nلإغلاق التيكيت اضغط زر الإغلاق')
+        .setFooter({ text: `Created by ${interaction.client.user.tag}` })
+        .setTimestamp();
     await channel.send({
-        embeds: [welcomeEmbed(interaction.user)]
-    });
-
-    // Hide from user
-    await channel.permissionOverwrites.edit(userId, {
-        ViewChannel: false
+        embeds: [welcome],
+        components: [userCloseRow()]
     });
 
     // Admin claim prompt
@@ -240,8 +241,11 @@ export const handleClaimTicket = async (interaction) => {
     await interaction.channel.send({
         content: publicText,
         embeds: [new EmbedBuilder()
-            .setDescription('تم الاستلام بنجاح')
-            .setThumbnail(interaction.user.displayAvatarURL())
+            .setAuthor({
+                name: `الاداري ${interaction.user.toString()}`,
+                iconURL: interaction.user.displayAvatarURL({ dynamic: true })
+            })
+            .setDescription(`التيكيت خاصه ب <@${ticket.userId}>\nتم انشائها في ${ticket.createdAt.toLocaleString('en-US')}`)
             .setColor('Green')
         ]
     });
