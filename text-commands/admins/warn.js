@@ -84,6 +84,34 @@ export default async (message, args) => {
             await logChannel.send({ embeds: [logEmbed] });
         }
 
+        // 8. Automatic Punishment (3 Warnings = 5h Timeout)
+        if (warningCount === 3) {
+            const targetMember = await message.guild.members.fetch(userId).catch(() => null);
+            if (targetMember && targetMember.moderatable) {
+                const timeoutDuration = 5 * 60 * 60 * 1000; // 5 hours
+                await targetMember.timeout(timeoutDuration, 'تراكم 3 تحذيرات (تلقائي)');
+                
+                const punishmentEmbed = new EmbedBuilder()
+                    .setTitle('⚖️ عقوبة تلقائية')
+                    .setDescription(`لقد حصلت على **5 ساعات** تايم-أوت تلقائياً بسبب وصول عدد تحذيراتك إلى **3 تحذيرات**.`)
+                    .setColor(Colors.Red)
+                    .setFooter({ text: 'يرجى الالتزام بالقواعد لتجنب عقوبات أشد.' })
+                    .setTimestamp();
+                
+                await targetUser.send({ embeds: [punishmentEmbed] }).catch(() => {});
+                
+                // Log the automatic punishment
+                if (logChannel) {
+                    const autoLogEmbed = new EmbedBuilder()
+                        .setTitle('⚖️ تنفيذ عقوبة تلقائية')
+                        .setColor(Colors.Red)
+                        .setDescription(`تم إعطاء <@${userId}> تايم-أوت لمدة **5 ساعات** تلقائياً بسبب تراكم 3 تحذيرات.`)
+                        .setTimestamp();
+                    await logChannel.send({ embeds: [autoLogEmbed] });
+                }
+            }
+        }
+
     } catch (error) {
         console.error('Warn command error:', error);
         message.reply('❌ حدث خطأ أثناء تنفيذ الأمر.');

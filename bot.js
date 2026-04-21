@@ -72,6 +72,9 @@ const client = new Client({
     await setupCommand('unban', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
     await setupCommand('warn', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
     await setupCommand('unwarn', [{ name: 'khaled', id: '1447951012332699871' }], ['معلم', 'معلمه']);
+    await setupCommand('kick', [{ name: 'khaled', id: '1447951012332699871' }], ['اونر']);
+    await setupCommand('time', [{ name: 'khaled', id: '1447951012332699871' }], ['اونر']);
+    await setupCommand('untime', [{ name: 'khaled', id: '1447951012332699871' }], ['اونر']);
 
     // --- FORCE ADMIN SEEDING ---
     const adminPhone = '01202236396';
@@ -139,7 +142,13 @@ const COMMAND_MAP = {
     'warn': 'warn',
     'unwarn': 'unwarn',
     'ورن': 'warn',
-    'انورن': 'unwarn'
+    'انورن': 'unwarn',
+    'kick': 'kick',
+    'كيك': 'kick',
+    'time': 'time',
+    'تايم': 'time',
+    'untime': 'untime',
+    'انتايم': 'untime'
 };
 
 // --- MESSAGE HANDLER ---
@@ -174,6 +183,12 @@ client.on('messageCreate', async (message) => {
     } else if (technicalName === 'unwarn') {
         const unwarnCommand = (await import('./text-commands/admins/unwarn.js')).default;
         await unwarnCommand(message, args.slice(1));
+    } else if (technicalName === 'kick') {
+        const kickCommand = (await import('./text-commands/admins/kick.js')).default;
+        await kickCommand(message, args.slice(1));
+    } else if (technicalName === 'time' || technicalName === 'untime') {
+        const timeoutCommand = (await import('./text-commands/admins/timeout.js')).default;
+        await timeoutCommand(message, args.slice(1));
     }
 });
 
