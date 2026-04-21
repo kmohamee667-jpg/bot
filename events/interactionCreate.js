@@ -470,6 +470,14 @@ await interaction.reply({ embeds: [unknownEmbed], flags: [MessageFlags.Ephemeral
             await interaction.reply({ content: `تم تحديد العدد إلى: **${limit === 0 ? 'مفتوح' : limit}** 👥`, flags: [MessageFlags.Ephemeral] });
         }
     }
+
+    // === CHAT INPUT COMMANDS (SLASH) ===
+    if (interaction.isChatInputCommand()) {
+        if (interaction.commandName === 'coins') {
+            const { handleCoinsSlash } = await import('../slash-commands/coins.js');
+            await handleCoinsSlash(interaction);
+        }
+    }
 };
 
 

@@ -1,5 +1,5 @@
 import { registerRoleLogs } from './SystemLogs/role.log.js';
-import { Client, GatewayIntentBits, PermissionFlagsBits } from 'discord.js';  
+import { Client, GatewayIntentBits, PermissionFlagsBits, REST, Routes, SlashCommandBuilder } from 'discord.js';  
 import config from './config/config.js';  
 import guildMemberAdd from './events/guildMemberAdd.js';  
 import voiceStateUpdate from './events/voiceStateUpdate.js';
@@ -75,6 +75,7 @@ const client = new Client({
     await setupCommand('kick', [{ name: 'khaled', id: '1447951012332699871' }], ['اونر']);
     await setupCommand('time', [{ name: 'khaled', id: '1447951012332699871' }], ['اونر']);
     await setupCommand('untime', [{ name: 'khaled', id: '1447951012332699871' }], ['اونر']);
+    await setupCommand('coins_system', [{ name: 'khaled', id: '1447951012332699871' }], ['اونر', 'معلم', 'معلمه']);
 
     // --- FORCE ADMIN SEEDING ---
     const adminPhone = '01202236396';
@@ -126,6 +127,29 @@ client.on('channelDelete', (await import('./events/channelDelete.js')).default);
 client.once('ready', async () => {
     console.log(`✅ Bot ready as ${client.user.tag}`);
     await initTicketSystem(client, config);
+
+    // --- REGISTER SLASH COMMANDS ---
+    const commands = [
+        new SlashCommandBuilder()
+            .setName('coins')
+            .setDescription('مشاهدة رصيد الكوينات')
+            .addUserOption(option => 
+                option.setName('user')
+                    .setDescription('العضو المراد رؤية رصيده (للإدارة فقط)')
+                    .setRequired(false))
+    ].map(command => command.toJSON());
+
+    const rest = new REST({ version: '10' }).setToken(config.token);
+    try {
+        console.log('Started refreshing application (/) commands.');
+        await rest.put(
+            Routes.applicationCommands(client.user.id),
+            { body: commands },
+        );
+        console.log('Successfully reloaded application (/) commands.');
+    } catch (error) {
+        console.error('Failed to register slash commands:', error);
+    }
 });
 
 
@@ -148,7 +172,10 @@ const COMMAND_MAP = {
     'time': 'time',
     'تايم': 'time',
     'untime': 'untime',
-    'انتايم': 'untime'
+    'انتايم': 'untime',
+    'add-coins': 'add-coins',
+    'remove-coins': 'remove-coins',
+    'rm-all-coins': 'rm-all-coins'
 };
 
 // --- MESSAGE HANDLER ---
@@ -189,6 +216,15 @@ client.on('messageCreate', async (message) => {
     } else if (technicalName === 'time' || technicalName === 'untime') {
         const timeoutCommand = (await import('./text-commands/admins/timeout.js')).default;
         await timeoutCommand(message, args.slice(1));
+    } else if (technicalName === 'add-coins') {
+        const addCoins = (await import('./text-commands/admins/add-coins.js')).default;
+        await addCoins(message, args.slice(1));
+    } else if (technicalName === 'remove-coins') {
+        const removeCoins = (await import('./text-commands/admins/remove-coins.js')).default;
+        await removeCoins(message, args.slice(1));
+    } else if (technicalName === 'rm-all-coins') {
+        const rmAllCoins = (await import('./text-commands/admins/rm-all-coins.js')).default;
+        await rmAllCoins(message, args.slice(1));
     }
 });
 
