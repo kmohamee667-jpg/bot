@@ -20,34 +20,32 @@ async function getAdminData() {
 export default async (interaction) => {
     if (!interaction.guild) return;
 
-    // Gender role assignment for channel 1494164521038905398
-    if (interaction.channelId === '1494164521038905398') {
+    // Gender role assignment for channel 1494164521038905398 - ephemeral replies, persistent message
+    if (interaction.channelId === '1494164521038905398' && interaction.isButton()) {
         const member = interaction.member;
-        if (interaction.isButton()) {
-            const maleRole = interaction.guild.roles.cache.find(r => r.name === 'male' || r.name === 'ولاد');
-            const femaleRole = interaction.guild.roles.cache.find(r => r.name === 'female' || r.name === 'بنات');
+        const maleRole = interaction.guild.roles.cache.find(r => r.name === 'male' || r.name === 'ولاد');
+        const femaleRole = interaction.guild.roles.cache.find(r => r.name === 'female' || r.name === 'بنات');
 
-            if (interaction.customId === 'gender_male') {
-                const hasMale = member.roles.cache.has(maleRole?.id || '');
-                if (!hasMale && maleRole) {
-                    await member.roles.add(maleRole);
-                    await interaction.update({ content: `تم إضافة رول **${maleRole.name}** لك! 👨 ✅`, components: [] });
-                } else {
-                    await interaction.update({ content: 'لديك بالفعل رول الولاد! 👨', components: [] });
-                }
-                return;
+        if (interaction.customId === 'gender_male') {
+            const hasMale = member.roles.cache.has(maleRole?.id || '');
+            if (!hasMale && maleRole) {
+                await member.roles.add(maleRole);
+                await interaction.reply({ content: `تم إضافة رول **${maleRole.name}** لك! 👨 ✅`, flags: [MessageFlags.Ephemeral] });
+            } else {
+                await interaction.reply({ content: 'لديك بالفعل رول الولاد! 👨', flags: [MessageFlags.Ephemeral] });
             }
+            return;
+        }
 
-            if (interaction.customId === 'gender_female') {
-                const hasFemale = member.roles.cache.has(femaleRole?.id || '');
-                if (!hasFemale && femaleRole) {
-                    await member.roles.add(femaleRole);
-                    await interaction.update({ content: `تم إضافة رول **${femaleRole.name}** لك! 👩 ✅`, components: [] });
-                } else {
-                    await interaction.update({ content: 'لديك بالفعل رول البنات! 👩', components: [] });
-                }
-                return;
+        if (interaction.customId === 'gender_female') {
+            const hasFemale = member.roles.cache.has(femaleRole?.id || '');
+            if (!hasFemale && femaleRole) {
+                await member.roles.add(femaleRole);
+                await interaction.reply({ content: `تم إضافة رول **${femaleRole.name}** لك! 👩 ✅`, flags: [MessageFlags.Ephemeral] });
+            } else {
+                await interaction.reply({ content: 'لديك بالفعل رول البنات! 👩', flags: [MessageFlags.Ephemeral] });
             }
+            return;
         }
     }
 

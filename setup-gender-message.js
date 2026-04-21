@@ -25,7 +25,7 @@ client.once('ready', async () => {
     new ButtonBuilder().setCustomId('gender_female').setLabel('بنت 👩').setStyle(ButtonStyle.Secondary)
   );
 
-  await channel.send({ embeds: [embed], components: [row] });
+  await channel.send({ content: '@everyone', embeds: [embed], components: [row] });
   console.log('✅ Gender selection message sent!');
   process.exit(0);
 });
