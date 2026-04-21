@@ -195,22 +195,26 @@ export default async (interaction) => {
             const session = await TimerSession.findOne({ channelId: interaction.channelId });
             if (!session) return interaction.reply({ content: 'لا يوجد تايمر يعمل حالياً.', flags: [MessageFlags.Ephemeral] });
 
-            // Permission Check: Starter, Room Owner, or Server Owner
+            // Permission Check: Only the Starter, Server Owner, or someone with 'OWNER' role
             const isStarter = interaction.user.id === session.startedBy;
-            const guildOwner = interaction.guild.ownerId === interaction.user.id;
-            
-            // Fetch Room Owner from PrivateVC
-            const pvcData = await PrivateVC.findOne({ channelId: interaction.channelId });
-            const isRoomOwner = pvcData && pvcData.ownerId === interaction.user.id;
+            const isGuildOwner = interaction.guild.ownerId === interaction.user.id;
+            const isServerAdmin = interaction.member.roles.cache.some(role => role.name === 'OWNER');
 
-            if (!isStarter && !isRoomOwner && !guildOwner) {
+            if (!isStarter && !isGuildOwner && !isServerAdmin) {
                 return interaction.reply({ 
-                    content: '❌ لا تملك صلاحية إيقاف هذا التاييمر (فقط صاحب الطلب أو صاحب الروم أو صاحب السيرفر يمكنهم ذلك).', 
+                    content: '❌ لا تملك صلاحية إيقاف هذا التاييمر (فقط الشخص الذي بدأه أو صاحب السيرفر يمكنهم ذلك).', 
                     flags: [MessageFlags.Ephemeral] 
                 });
             }
 
             TimerManager.stopTimer(interaction.channelId);
+
+            // Delete the timer message before deleting the session
+            if (session.messageId) {
+                const msg = await interaction.channel.messages.fetch(session.messageId).catch(() => null);
+                if (msg) await msg.delete().catch(() => {});
+            }
+
             await TimerSession.deleteOne({ _id: session._id });
 
             await interaction.reply({ content: `✅ تم إيقاف التايمر ومسح البيانات بواسطة <@${interaction.user.id}>.` });

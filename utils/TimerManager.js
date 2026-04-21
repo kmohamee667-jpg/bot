@@ -94,9 +94,15 @@ class TimerManager {
 
         const embed = new EmbedBuilder()
             .setTitle(`⏱️ ${session.status === 'study' ? 'وقت الدراسة' : 'وقت الراحة'} - دورة ${session.currentCycle}/${session.totalCycles}`)
-            .setDescription(`>>> **الروم:** \`${channelName}\`\n**الأعضاء:** \`${memberCount}\` عضو\n**الثيم:** ${themeIcon} \`${theme.name}\`\n\n**بدأ بواسطة:** <@${session.startedBy}>\n**الحالة:** ${session.status === 'study' ? '📖 دراسة بتركيز' : '☕ استراحة قصيرة'}`)
+            .addFields(
+                { name: '📍 الروم', value: `\`${channelName}\``, inline: true },
+                { name: '👥 الأعضاء', value: `\`${memberCount}\` عضو`, inline: true },
+                { name: '🎨 الثيم', value: `${themeIcon} \`${theme.name}\``, inline: true },
+                { name: '👤 المنشئ', value: `<@${session.startedBy}>`, inline: true },
+                { name: '⚙️ الحالة', value: session.status === 'study' ? '📖 دراسة بتركيز' : '☕ استراحة قصيرة', inline: false }
+            )
             .setImage('attachment://timer.png')
-            .setColor(session.status === 'study' ? '#FF4500' : '#00FF7F')
+            .setColor('#00FF00') // Solid Green
             .setFooter({ text: `تحديث كل 10 ثوانٍ • فكر في هدفك!` });
 
         const row = new ActionRowBuilder().addComponents(
@@ -125,6 +131,15 @@ class TimerManager {
     }
 
     async handleTransition(interaction, session, theme) {
+        // Delete the current timer message to resend a fresh one
+        if (session.messageId) {
+            try {
+                const msg = await interaction.channel.messages.fetch(session.messageId).catch(() => null);
+                if (msg) await msg.delete().catch(() => {});
+            } catch (err) {}
+            session.messageId = null; // Important: Clear ID so updateMessage sends new
+        }
+
         if (session.status === 'study') {
             // Notification: Mention everyone in VC
             const vc = interaction.guild.channels.cache.get(session.voiceChannelId);
