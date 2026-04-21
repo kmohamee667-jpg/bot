@@ -7,7 +7,7 @@
 - [x] 3. Update bot.js: COMMAND_MAP + AdminCommand seed for 'adi'
 - [ ] 4. Test: `node bot.js`, `ادي @user roleName` (success/fail hierarchy/no-role), embeds role.png
 - [ ] 5. Merge to original TODO.md, complete
-- [ ] 4. Test: Restart bot, test `ادي @user existingRole`, fail hierarchy/other → check embeds/logs
+- [ ] 4. Test: Restart bot, test `ادي @user existingRole`, fail hierarchy/other → check embeds/logsc
 - [ ] 5. Update original TODO.md, attempt_completion
 
 ✅ Steps 1-3 complete.
