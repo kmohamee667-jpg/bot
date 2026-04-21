@@ -1,7 +1,9 @@
 import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, PermissionFlagsBits, UserSelectMenuBuilder, MessageFlags } from 'discord.js';
+import config from '../config/config.js';
 import PrivateVC from '../models/PrivateVC.js';
 import AdminCommand from '../models/AdminCommand.js';
 import GuildSettings from '../models/GuildSettings.js';
+
 
 // Cache for administrative permissions to avoid repeated DB calls
 let adminCache = null;
@@ -358,6 +360,60 @@ export default async (interaction) => {
         }
     }
 
+// === TICKET SYSTEM HANDLERS ===
+    // Check if ticket channel first (early return for performance)
+    if (interaction.channelId === config.ticketChannelId && interaction.isButton() && interaction.customId === 'ticket_create') {
+        const { handleCreateTicket } = await import('../ticket/ticketManager.js');
+        await handleCreateTicket(interaction);
+        return;
+    }
+
+    // All other ticket interactions
+    if (interaction.customId?.startsWith('ticket_')) {
+        const { 
+            handleCreateTicket, 
+            confirmTicketCreation, 
+            handleCloseTicket, 
+            executeCloseTicket, 
+            handleClaimTicket,
+            handleReopenTicket,
+            handleDeleteTicket 
+        } = await import('../ticket/ticketManager.js');
+        
+        try {
+            switch (interaction.customId) {
+                case 'ticket_confirm_yes':
+                    await confirmTicketCreation(interaction);
+                    break;
+                case 'ticket_close_confirm_yes':
+                    await executeCloseTicket(interaction);
+                    break;
+                case 'ticket_close_confirm_no':
+                case 'ticket_confirm_no':
+                    await interaction.update({ content: 'تم إلغاء العملية.', components: [], embeds: [] });
+                    break;
+                case 'ticket_close':
+                    await handleCloseTicket(interaction);
+                    break;
+                case 'ticket_claim':
+                    await handleClaimTicket(interaction);
+                    break;
+                case 'ticket_open':
+                    await handleReopenTicket(interaction);
+                    break;
+                case 'ticket_delete':
+                    await handleDeleteTicket(interaction);
+                    break;
+                default:
+                    await interaction.reply({ content: 'زر غير معروف!', ephemeral: true });
+            }
+        } catch (error) {
+            console.error('[Ticket Error]:', error);
+            await interaction.reply({ content: 'حدث خطأ! حاول مرة أخرى.', ephemeral: true }).catch(() => {});
+        }
+        return;
+    }
+
     // 4. Handle Modals
     if (interaction.isModalSubmit()) {
         if (interaction.customId === 'vc_modal_rename') {
@@ -379,4 +435,5 @@ export default async (interaction) => {
         }
     }
 };
+
 

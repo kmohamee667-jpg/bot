@@ -104,6 +104,12 @@ client.on('guildMemberAdd', guildMemberAdd);
 client.on('voiceStateUpdate', voiceStateUpdate);
 client.on('interactionCreate', interactionCreate);
 
+client.once('ready', async () => {
+    console.log(`✅ Bot ready as ${client.user.tag}`);
+    await initTicketSystem(client, config);
+});
+
+
 // Command Mappings (Arabic -> Technical)
 const COMMAND_MAP = {
     'مسح': 'mas7',
