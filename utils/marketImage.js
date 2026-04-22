@@ -1,4 +1,4 @@
-import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
+import { createCanvas, GlobalFonts, loadImage } from '@napi-rs/canvas';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -8,7 +8,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 try {
     GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/Welcome Darling.otf'), 'Welcome Darling');
     GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/Super Squad.ttf'), 'Super Squad');
+    GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/coines_market.ttf'), 'Coins Market');
 } catch (err) {}
+
+const formatNumber = (num) => {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return num.toString();
+};
 
 export async function generateMarketImage(rolesData) {
     const width = 1200;
@@ -26,9 +37,17 @@ export async function generateMarketImage(rolesData) {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // Background (Dark Theme)
-    ctx.fillStyle = '#1e1f22'; // Discord Dark
-    ctx.fillRect(0, 0, width, height);
+    // Background (Dark Theme + Image)
+    try {
+        const bgImage = await loadImage(path.join(__dirname, '../imgs/coin_bg.png'));
+        ctx.drawImage(bgImage, 0, 0, width, height);
+        // Add overlay
+        ctx.fillStyle = 'rgba(30, 31, 34, 0.7)'; // Discord dark with transparency
+        ctx.fillRect(0, 0, width, height);
+    } catch (e) {
+        ctx.fillStyle = '#1e1f22'; // Discord Dark
+        ctx.fillRect(0, 0, width, height);
+    }
 
     // Draw Grid
     rolesData.forEach((role, i) => {
@@ -64,8 +83,8 @@ export async function generateMarketImage(rolesData) {
 
         // Price
         ctx.fillStyle = '#FFD700'; // Gold
-        ctx.font = 'bold 28px "Super Squad", Arial';
-        ctx.fillText(`Price: ${role.price.toLocaleString()}`, x + 40, y + 100);
+        ctx.font = '35px "Coins Market", Arial';
+        ctx.fillText(formatNumber(role.price), x + 40, y + 100);
     });
 
     if (rolesData.length === 0) {

@@ -9,11 +9,15 @@ try {
     GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/Welcome Darling.otf'), 'Welcome Darling');
     GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/Super Squad.ttf'), 'Super Squad');
     GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/Sports World-Regular.ttf'), 'Sports World');
+    GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/coines_market.ttf'), 'Coins Market');
 } catch (err) {
     console.error('[Font Registration Error in coinImage]:', err);
 }
 
 const formatNumber = (num) => {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
     if (num >= 1000) {
         return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
     }
@@ -101,7 +105,7 @@ export async function generateCoinCard(username, avatarURL, balance, studyTime =
 
     // Value
     ctx.fillStyle = '#D3D3D3'; // Light gray
-    ctx.font = 'lighter 30px Arial, sans-serif'; // Thin font
+    ctx.font = '30px "Coins Market", Arial'; // Using second font
     const balanceText = formatNumber(balance);
     ctx.fillText(balanceText, leftX, 360);
 
@@ -115,7 +119,7 @@ export async function generateCoinCard(username, avatarURL, balance, studyTime =
 
     // Value
     ctx.fillStyle = '#D3D3D3'; // Light gray
-    ctx.font = 'lighter 30px Arial, sans-serif'; // Thin font
+    ctx.font = '30px "Coins Market", Arial'; // Using second font
     const timeText = formatTime(studyTime);
     ctx.fillText(timeText, rightX, 360);
 
