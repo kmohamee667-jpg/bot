@@ -83,6 +83,14 @@ const client = new Client({
     await setupCommand('untime', [{ name: 'khaled', id: '1447951012332699871' }], ['اونر']);
     await setupCommand('coins_system', [{ name: 'khaled', id: '1447951012332699871' }], ['اونر', 'معلم', 'معلمه']);
     
+    const lockRoles = [
+        'OWNER', 'معلم', 'معلمه',
+        '1496373075086803045', '1494164519910510602', '1494164519927156868',
+        '1494164520015499394', '1494164519994392741', '1494164519994392740', '1494164519994392739'
+    ];
+    await setupCommand('lock', [{ name: 'khaled', id: '1447951012332699871' }], lockRoles);
+    await setupCommand('unlock', [{ name: 'khaled', id: '1447951012332699871' }], lockRoles);
+    
     // Force update manage_timer to match new requirements
     await AdminCommand.findOneAndUpdate(
         { command: 'manage_timer' },
@@ -262,7 +270,11 @@ const COMMAND_MAP = {
     'time': 'time',
     'تايم': 'time',
     'untime': 'untime',
-    'انتايم': 'untime'
+    'انتايم': 'untime',
+    '!lock': 'lock',
+    'قفل': 'lock',
+    '!unlock': 'unlock',
+    'فتح': 'unlock'
 };
 
 // --- MESSAGE HANDLER ---
@@ -306,6 +318,9 @@ client.on('messageCreate', async (message) => {
     } else if (technicalName === 'time' || technicalName === 'untime') {
         const timeoutCommand = (await import('./text-commands/admins/timeout.js')).default;
         await timeoutCommand(message, args.slice(1));
+    } else if (technicalName === 'lock' || technicalName === 'unlock') {
+        const lockCommand = (await import('./text-commands/admins/lock.js')).default;
+        await lockCommand(message, args.slice(1), technicalName);
     }
 });
 
