@@ -57,21 +57,28 @@ export async function generateMarketImage(rolesData) {
         const x = padding + (col * (boxWidth + gap));
         const y = padding + (row * (boxHeight + gap));
 
-        // Box background
-        ctx.fillStyle = '#2b2d31';
+        // Glassmorphism Box background
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)'; // Transparent glass effect
         ctx.beginPath();
         ctx.roundRect(x, y, boxWidth, boxHeight, 20);
         ctx.fill();
 
+        const roleColor = role.color && role.color !== '#000000' ? role.color : '#99aab5';
+
+        // Box border matching role color
+        ctx.strokeStyle = roleColor;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
         // Left color indicator
-        ctx.fillStyle = role.color && role.color !== '#000000' ? role.color : '#99aab5';
+        ctx.fillStyle = roleColor;
         ctx.beginPath();
         ctx.roundRect(x, y, 15, boxHeight, [20, 0, 0, 20]);
         ctx.fill();
 
         // Role Name
-        ctx.fillStyle = role.color && role.color !== '#000000' ? role.color : '#ffffff';
-        ctx.font = 'bold 32px Arial';
+        ctx.fillStyle = roleColor;
+        ctx.font = '32px "Coins Market", Arial'; // Use specific font
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         
@@ -84,7 +91,7 @@ export async function generateMarketImage(rolesData) {
         // Price
         ctx.fillStyle = '#D3D3D3'; // Light gray
         ctx.font = 'lighter 26px "Coins Market", Arial';
-        ctx.fillText(formatNumber(role.price), x + 40, y + 100);
+        ctx.fillText(role.price.toString(), x + 40, y + 100); // Raw number with zeros
     });
 
     if (rolesData.length === 0) {
