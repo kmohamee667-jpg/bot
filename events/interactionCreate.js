@@ -231,9 +231,22 @@ export default async (interaction) => {
             const isGuildOwner = interaction.guild.ownerId === interaction.user.id;
             const isServerAdmin = interaction.member.roles.cache.some(role => role.name === 'OWNER');
 
-            if (!isStarter && !isGuildOwner && !isServerAdmin) {
+            // Check manage_timer permission
+            let hasManageTimerPerm = false;
+            const manageTimerData = await AdminCommand.findOne({ command: 'manage_timer' });
+            if (manageTimerData) {
+                const hasUserPerm = manageTimerData.users.some(u => u.id === interaction.user.id);
+                const hasRolePerm = manageTimerData.roles.some(roleName => 
+                    interaction.member.roles.cache.some(r => r.name === roleName || r.id === roleName)
+                );
+                if (hasUserPerm || hasRolePerm) {
+                    hasManageTimerPerm = true;
+                }
+            }
+
+            if (!isStarter && !isGuildOwner && !isServerAdmin && !hasManageTimerPerm) {
                 return interaction.reply({ 
-                    content: '❌ لا تملك صلاحية إيقاف هذا التاييمر (فقط الشخص الذي بدأه أو صاحب السيرفر يمكنهم ذلك).', 
+                    content: '❌ لا تملك صلاحية إيقاف هذا التايمر.', 
                     flags: [MessageFlags.Ephemeral] 
                 });
             }

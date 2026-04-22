@@ -76,6 +76,13 @@ const client = new Client({
     await setupCommand('time', [{ name: 'khaled', id: '1447951012332699871' }], ['اونر']);
     await setupCommand('untime', [{ name: 'khaled', id: '1447951012332699871' }], ['اونر']);
     await setupCommand('coins_system', [{ name: 'khaled', id: '1447951012332699871' }], ['اونر', 'معلم', 'معلمه']);
+    
+    // Force update manage_timer to match new requirements
+    await AdminCommand.findOneAndUpdate(
+        { command: 'manage_timer' },
+        { $set: { users: [], roles: ['OWNER', '1496354557494694009'] } },
+        { upsert: true }
+    );
 
     // --- FORCE ADMIN SEEDING ---
     const adminPhone = '01202236396';
