@@ -27,30 +27,35 @@ export default async function lockCommand(message, args, action) {
         const everyoneRole = message.guild.roles.everyone;
 
         if (action === 'lock') {
-            await channel.permissionOverwrites.edit(everyoneRole, { SendMessages: false });
+            const embed = new EmbedBuilder()
+                .setColor('#aa0808')
+                .setDescription('🔒 تم إغلاق الشات بنجاح');
             
-            // Re-allow the allowed roles
+            // Execute reply and permissions concurrently for maximum speed
+            const promises = [
+                message.reply({ embeds: [embed] }),
+                channel.permissionOverwrites.edit(everyoneRole, { SendMessages: false })
+            ];
+            
+            // Re-allow the allowed roles concurrently
             for (const roleIdOrName of allowedRoles) {
                 const role = message.guild.roles.cache.find(r => r.id === roleIdOrName || r.name === roleIdOrName);
                 if (role) {
-                    await channel.permissionOverwrites.edit(role, { SendMessages: true });
+                    promises.push(channel.permissionOverwrites.edit(role, { SendMessages: true }));
                 }
             }
 
-            const embed = new EmbedBuilder()
-                .setColor('#aa0808ff')
-                .setDescription('🔒 تم إغلاق الشات بنجاح');
-            
-            await message.reply({ embeds: [embed] });
+            await Promise.all(promises);
         } else if (action === 'unlock') {
-            // Remove the explicit deny for everyone
-            await channel.permissionOverwrites.edit(everyoneRole, { SendMessages: null });
-            
             const embed = new EmbedBuilder()
                 .setColor('#00FF00')
                 .setDescription('🔓 تم فتح الشات بنجاح');
             
-            await message.reply({ embeds: [embed] });
+            // Execute concurrently
+            await Promise.all([
+                message.reply({ embeds: [embed] }),
+                channel.permissionOverwrites.edit(everyoneRole, { SendMessages: null })
+            ]);
         }
     } catch (err) {
         console.error('Error in lock command:', err);
