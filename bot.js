@@ -19,6 +19,9 @@ import jwt from 'jsonwebtoken';
 // Ticket System
 import { initTicketSystem } from './ticket/initTicketSystem.js';
 
+// Timer Manager
+import TimerManager from './utils/TimerManager.js';
+
 // Command Imports
 import mas7Command from './text-commands/admins/mas7.js';
 import nicknameCommand from './text-commands/admins/nickname.js';
@@ -134,6 +137,9 @@ client.on('channelDelete', (await import('./events/channelDelete.js')).default);
 client.once('clientReady', async () => {
     console.log(`✅ Bot ready as ${client.user.tag}`);
     await initTicketSystem(client, config);
+
+    // Initialize Timer Manager Reward Loop
+    TimerManager.startRewardInterval(client);
 
     await initTicketSystem(client, config);
 

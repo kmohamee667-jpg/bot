@@ -1,10 +1,46 @@
-import { createCanvas, loadImage } from '@napi-rs/canvas';
+import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export async function generateCoinCard(username, avatarURL, balance) {
+// Register Custom Fonts
+try {
+    GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/Welcome Darling.otf'), 'Welcome Darling');
+    GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/Super Squad.ttf'), 'Super Squad');
+    GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/Sports World-Regular.ttf'), 'Sports World');
+} catch (err) {
+    console.error('[Font Registration Error in coinImage]:', err);
+}
+
+const formatNumber = (num) => {
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return num.toString();
+};
+
+const formatTime = (minutes) => {
+    if (!minutes || minutes <= 0) return '0 دقيقه';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    let str = [];
+    if (h > 0) {
+        if (h === 1) str.push('ساعه');
+        else if (h === 2) str.push('ساعتين');
+        else if (h <= 10) str.push(`${h} ساعات`);
+        else str.push(`${h} ساعه`);
+    }
+    if (m > 0) {
+        if (m === 1) str.push('دقيقه');
+        else if (m === 2) str.push('دقيقتين');
+        else if (m <= 10) str.push(`${m} دقائق`);
+        else str.push(`${m} دقيقه`);
+    }
+    return str.join(' و ');
+};
+
+export async function generateCoinCard(username, avatarURL, balance, studyTime = 0) {
     const width = 800;
     const height = 400;
     const canvas = createCanvas(width, height);
@@ -26,9 +62,9 @@ export async function generateCoinCard(username, avatarURL, balance) {
     // 3. User Avatar
     try {
         const avatar = await loadImage(avatarURL);
-        const avatarSize = 150;
+        const avatarSize = 200; // Increased size
         const x = width / 2;
-        const y = height / 2 - 50;
+        const y = height / 2 - 40; // Moved slightly up
 
         ctx.save();
         ctx.beginPath();
@@ -38,8 +74,9 @@ export async function generateCoinCard(username, avatarURL, balance) {
         ctx.drawImage(avatar, x - avatarSize / 2, y - avatarSize / 2, avatarSize, avatarSize);
         ctx.restore();
 
-        ctx.strokeStyle = '#FFD700';
-        ctx.lineWidth = 5;
+        // White Frame
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 6;
         ctx.beginPath();
         ctx.arc(x, y, avatarSize / 2, 0, Math.PI * 2, true);
         ctx.stroke();
@@ -50,27 +87,37 @@ export async function generateCoinCard(username, avatarURL, balance) {
     // Text Settings
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-    ctx.shadowBlur = 15;
-    ctx.shadowOffsetX = 3;
-    ctx.shadowOffsetY = 3;
-
-    // 4. "Coins" Text
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 40px Arial, sans-serif';
-    ctx.fillText('Coins', width / 2, 270);
-
-    // 5. Balance Text
-    ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 80px Arial, sans-serif';
-    
-    // Add a strong stroke and shadow for maximum visibility
     ctx.shadowBlur = 10;
-    ctx.shadowColor = 'rgba(0, 0, 0, 1)';
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 3;
-    const balanceText = balance.toLocaleString();
-    ctx.strokeText(balanceText, width / 2, 350);
-    ctx.fillText(balanceText, width / 2, 350);
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+
+    // --- Left Side: Coins ---
+    const leftX = width * 0.25;
+    
+    // Title
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '35px "Super Squad", Arial';
+    ctx.fillText('Coins', leftX, 320);
+
+    // Value
+    ctx.fillStyle = '#D3D3D3'; // Light gray
+    ctx.font = 'lighter 30px Arial, sans-serif'; // Thin font
+    const balanceText = formatNumber(balance);
+    ctx.fillText(balanceText, leftX, 360);
+
+    // --- Right Side: Study Time ---
+    const rightX = width * 0.75;
+    
+    // Title
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '35px "Super Squad", Arial';
+    ctx.fillText('Study Time', rightX, 320);
+
+    // Value
+    ctx.fillStyle = '#D3D3D3'; // Light gray
+    ctx.font = 'lighter 30px Arial, sans-serif'; // Thin font
+    const timeText = formatTime(studyTime);
+    ctx.fillText(timeText, rightX, 360);
 
     return canvas.toBuffer('image/png');
 }

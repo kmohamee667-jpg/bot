@@ -3,6 +3,7 @@ import { generateTimerImage } from './timerImage.js';
 import TimerSession from '../models/TimerSession.js';
 import TimerTheme from '../models/TimerTheme.js';
 import PrivateVC from '../models/PrivateVC.js';
+import Coin from '../models/Coin.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -11,6 +12,44 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 class TimerManager {
     constructor() {
         this.timers = new Map(); // channelId -> timeout/interval object
+    }
+
+    startRewardInterval(client) {
+        // Run every minute (60000 ms)
+        setInterval(async () => {
+            try {
+                // Find all active study sessions
+                const activeSessions = await TimerSession.find({ status: 'study' });
+                
+                for (const session of activeSessions) {
+                    const guild = client.guilds.cache.get(session.guildId);
+                    if (!guild) continue;
+                    
+                    const channel = guild.channels.cache.get(session.voiceChannelId);
+                    if (!channel || !channel.isVoiceBased()) continue;
+                    
+                    // For each member in the voice channel
+                    for (const [, member] of channel.members) {
+                        if (member.user.bot) continue; // Skip bots
+                        
+                        let reward = 1;
+                        // Reward 2 if camera or stream is on
+                        if (member.voice.selfVideo || member.voice.streaming) {
+                            reward = 2;
+                        }
+                        
+                        // Update Coin balance and studyTime
+                        await Coin.findOneAndUpdate(
+                            { guildId: guild.id, userId: member.id },
+                            { $inc: { balance: reward, studyTime: 1 } },
+                            { upsert: true }
+                        );
+                    }
+                }
+            } catch (err) {
+                console.error('[Study Reward Error]:', err);
+            }
+        }, 60000);
     }
 
     async startTimer(interaction, config) {

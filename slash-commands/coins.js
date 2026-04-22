@@ -27,12 +27,13 @@ export async function handleCoinsSlash(interaction) {
         // 2. Get Balance with robust fetching
         let coinData = await Coin.findOne({ guildId: interaction.guild.id, userId: targetUser.id }).lean();
         const balance = coinData ? Math.floor(coinData.balance) : 0;
+        const studyTime = coinData ? Math.floor(coinData.studyTime || 0) : 0;
         
-        console.log(`[Coins Debug] Fetched balance for ${targetUser.id} in ${interaction.guild.id}: ${balance}`);
+        console.log(`[Coins Debug] Fetched balance for ${targetUser.id} in ${interaction.guild.id}: ${balance}, studyTime: ${studyTime}`);
 
         // 3. Generate Image
         const avatarURL = targetUser.displayAvatarURL({ extension: 'png', size: 256 });
-        const imageBuffer = await generateCoinCard(targetUser.username, avatarURL, balance);
+        const imageBuffer = await generateCoinCard(targetUser.username, avatarURL, balance, studyTime);
         const attachment = new AttachmentBuilder(imageBuffer, { name: 'coins.png' });
 
         // 4. Create Embed

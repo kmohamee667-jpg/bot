@@ -3,7 +3,8 @@ import mongoose from 'mongoose';
 const coinSchema = new mongoose.Schema({
     guildId: { type: String, required: true },
     userId: { type: String, required: true },
-    balance: { type: Number, default: 0 }
+    balance: { type: Number, default: 0 },
+    studyTime: { type: Number, default: 0 }
 }, { timestamps: true });
 
 // Ensure unique record per user in a guild
