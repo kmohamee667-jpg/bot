@@ -82,8 +82,8 @@ export async function generateMarketImage(rolesData) {
         ctx.fillText(name, x + 40, y + 50);
 
         // Price
-        ctx.fillStyle = '#FFD700'; // Gold
-        ctx.font = '35px "Coins Market", Arial';
+        ctx.fillStyle = '#D3D3D3'; // Light gray
+        ctx.font = 'lighter 26px "Coins Market", Arial';
         ctx.fillText(formatNumber(role.price), x + 40, y + 100);
     });
 

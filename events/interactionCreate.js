@@ -269,8 +269,10 @@ export default async (interaction) => {
 
     // 2. Handle Select Menus (String)
     if (interaction.isStringSelectMenu()) {
-        if (!(await isOwnerAction(interaction.customId))) return;
-        if (!vcData) return interaction.reply({ content: 'عذراً، لم يتم العثور على بيانات لهذه الغرفة في قاعدة البيانات.', flags: [MessageFlags.Ephemeral] });
+        if (interaction.customId.startsWith('vc_')) {
+            if (!(await isOwnerAction(interaction.customId))) return;
+            if (!vcData) return interaction.reply({ content: 'عذراً، لم يتم العثور على بيانات لهذه الغرفة في قاعدة البيانات.', flags: [MessageFlags.Ephemeral] });
+        }
 
         if (interaction.customId === 'vc_select_privacy') {
             const selection = interaction.values[0];
@@ -584,20 +586,22 @@ export default async (interaction) => {
     // 5.5 Handle Select Menus
     if (interaction.isStringSelectMenu()) {
         if (interaction.customId === 'market_select_role') {
+            await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
             const roleId = interaction.values[0];
             const member = interaction.member;
 
             if (roleId === 'empty') {
-                return interaction.reply({ content: '❌ السوق فارغ حالياً.', flags: [MessageFlags.Ephemeral] });
+                return interaction.editReply({ content: '❌ السوق فارغ حالياً.' });
             }
 
             if (member.roles.cache.has(roleId)) {
-                return interaction.reply({ content: '❌ أنت تملك هذه الرتبة بالفعل.', flags: [MessageFlags.Ephemeral] });
+                return interaction.editReply({ content: '❌ أنت تملك هذه الرتبة بالفعل.' });
             }
 
             const marketRole = await MarketRole.findOne({ guildId: interaction.guild.id, roleId: roleId });
             if (!marketRole) {
-                return interaction.reply({ content: '❌ هذه الرتبة لم تعد متوفرة في السوق.', flags: [MessageFlags.Ephemeral] });
+                return interaction.editReply({ content: '❌ هذه الرتبة لم تعد متوفرة في السوق.' });
             }
 
             const userCoin = await Coin.findOne({ guildId: interaction.guild.id, userId: interaction.user.id });
@@ -605,7 +609,7 @@ export default async (interaction) => {
 
             if (balance < marketRole.price) {
                 const diff = marketRole.price - balance;
-                return interaction.reply({ content: `❌ هذه الرتبة بسعر ${marketRole.price} كوين وأنت تملك ${balance} كوين. ينقصك ${diff} كوين لشرائها.`, flags: [MessageFlags.Ephemeral] });
+                return interaction.editReply({ content: `❌ هذه الرتبة بسعر ${marketRole.price} كوين وأنت تملك ${balance} كوين. ينقصك ${diff} كوين لشرائها.` });
             }
 
             try {
@@ -614,10 +618,10 @@ export default async (interaction) => {
                     { $inc: { balance: -marketRole.price } }
                 );
                 await member.roles.add(roleId);
-                return interaction.reply({ content: `✅ مبروك! لقد قمت بشراء الرتبة بنجاح وتم خصم ${marketRole.price} كوين من رصيدك.`, flags: [MessageFlags.Ephemeral] });
+                return interaction.editReply({ content: `✅ مبروك! لقد قمت بشراء الرتبة بنجاح وتم خصم ${marketRole.price} كوين من رصيدك.` });
             } catch (err) {
                 console.error('[Market Purchase Error]:', err);
-                return interaction.reply({ content: '❌ حدث خطأ أثناء إتمام عملية الشراء. قد تكون رتبة البوت أقل من الرتبة المطلوبة.', flags: [MessageFlags.Ephemeral] });
+                return interaction.editReply({ content: '❌ حدث خطأ أثناء إتمام عملية الشراء. قد تكون رتبة البوت أقل من الرتبة المطلوبة.' });
             }
         }
     }

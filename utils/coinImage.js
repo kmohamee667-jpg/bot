@@ -100,7 +100,7 @@ export async function generateCoinCard(username, avatarURL, balance, studyTime =
     
     // Title
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '35px "Super Squad", Arial';
+    ctx.font = '35px "Coins Market", Arial';
     ctx.fillText('Coins', leftX, 320);
 
     // Value
@@ -114,7 +114,7 @@ export async function generateCoinCard(username, avatarURL, balance, studyTime =
     
     // Title
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '35px "Super Squad", Arial';
+    ctx.font = '35px "Coins Market", Arial';
     ctx.fillText('Study Time', rightX, 320);
 
     // Value
