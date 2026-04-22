@@ -5,8 +5,8 @@ import AdminCommand from '../models/AdminCommand.js';
 import GuildSettings from '../models/GuildSettings.js';
 import TimerSession from '../models/TimerSession.js';
 import TimerManager from '../utils/TimerManager.js';
-
-
+import Coin from '../models/Coin.js';
+import MarketRole from '../models/MarketRole.js';
 // Cache for administrative permissions to avoid repeated DB calls
 let adminCache = null;
 let lastCacheUpdate = 0;
@@ -569,6 +569,56 @@ export default async (interaction) => {
         } else if (commandName === 'start') {
             const { handleStartTimer } = await import('../slash-commands/timer/start.js');
             await handleStartTimer(interaction);
+        } else if (commandName === 'add-role') {
+            const { handleAddRoleSlash } = await import('../slash-commands/market.js');
+            await handleAddRoleSlash(interaction);
+        } else if (commandName === 'edit-role-price') {
+            const { handleEditRolePriceSlash } = await import('../slash-commands/market.js');
+            await handleEditRolePriceSlash(interaction);
+        } else if (commandName === 'delete-role') {
+            const { handleDeleteRoleSlash } = await import('../slash-commands/market.js');
+            await handleDeleteRoleSlash(interaction);
+        }
+    }
+
+    // 5.5 Handle Select Menus
+    if (interaction.isStringSelectMenu()) {
+        if (interaction.customId === 'market_select_role') {
+            const roleId = interaction.values[0];
+            const member = interaction.member;
+
+            if (roleId === 'empty') {
+                return interaction.reply({ content: '❌ السوق فارغ حالياً.', flags: [MessageFlags.Ephemeral] });
+            }
+
+            if (member.roles.cache.has(roleId)) {
+                return interaction.reply({ content: '❌ أنت تملك هذه الرتبة بالفعل.', flags: [MessageFlags.Ephemeral] });
+            }
+
+            const marketRole = await MarketRole.findOne({ guildId: interaction.guild.id, roleId: roleId });
+            if (!marketRole) {
+                return interaction.reply({ content: '❌ هذه الرتبة لم تعد متوفرة في السوق.', flags: [MessageFlags.Ephemeral] });
+            }
+
+            const userCoin = await Coin.findOne({ guildId: interaction.guild.id, userId: interaction.user.id });
+            const balance = userCoin ? userCoin.balance : 0;
+
+            if (balance < marketRole.price) {
+                const diff = marketRole.price - balance;
+                return interaction.reply({ content: `❌ هذه الرتبة بسعر ${marketRole.price} كوين وأنت تملك ${balance} كوين. ينقصك ${diff} كوين لشرائها.`, flags: [MessageFlags.Ephemeral] });
+            }
+
+            try {
+                await Coin.updateOne(
+                    { guildId: interaction.guild.id, userId: interaction.user.id },
+                    { $inc: { balance: -marketRole.price } }
+                );
+                await member.roles.add(roleId);
+                return interaction.reply({ content: `✅ مبروك! لقد قمت بشراء الرتبة بنجاح وتم خصم ${marketRole.price} كوين من رصيدك.`, flags: [MessageFlags.Ephemeral] });
+            } catch (err) {
+                console.error('[Market Purchase Error]:', err);
+                return interaction.reply({ content: '❌ حدث خطأ أثناء إتمام عملية الشراء. قد تكون رتبة البوت أقل من الرتبة المطلوبة.', flags: [MessageFlags.Ephemeral] });
+            }
         }
     }
 

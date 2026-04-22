@@ -22,6 +22,9 @@ import { initTicketSystem } from './ticket/initTicketSystem.js';
 // Timer Manager
 import TimerManager from './utils/TimerManager.js';
 
+// Market Manager
+import MarketManager from './utils/MarketManager.js';
+
 // Command Imports
 import mas7Command from './text-commands/admins/mas7.js';
 import nicknameCommand from './text-commands/admins/nickname.js';
@@ -140,6 +143,9 @@ client.once('clientReady', async () => {
 
     // Initialize Timer Manager Reward Loop
     TimerManager.startRewardInterval(client);
+    
+    // Initialize Role Market
+    MarketManager.initMarket(client);
 
     await initTicketSystem(client, config);
 
@@ -179,6 +185,23 @@ client.once('clientReady', async () => {
             .setDescription('تصفير رصيد عضو أو السيرفر بالكامل')
             .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
             .addUserOption(option => option.setName('user').setDescription('العضو (اتركه فارغاً لتصفير السيرفر)').setRequired(false)),
+        new SlashCommandBuilder()
+            .setName('add-role')
+            .setDescription('إضافة رتبة لسوق الرتب')
+            .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+            .addRoleOption(option => option.setName('role').setDescription('الرتبة').setRequired(true))
+            .addIntegerOption(option => option.setName('price').setDescription('السعر بالكوينات').setRequired(true)),
+        new SlashCommandBuilder()
+            .setName('edit-role-price')
+            .setDescription('تعديل سعر رتبة في سوق الرتب')
+            .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+            .addRoleOption(option => option.setName('role').setDescription('الرتبة').setRequired(true))
+            .addIntegerOption(option => option.setName('price').setDescription('السعر الجديد بالكوينات').setRequired(true)),
+        new SlashCommandBuilder()
+            .setName('delete-role')
+            .setDescription('مسح رتبة من سوق الرتب')
+            .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+            .addRoleOption(option => option.setName('role').setDescription('الرتبة').setRequired(true)),
         new SlashCommandBuilder()
             .setName('start')
             .setDescription('بدء تايمر المذاكرة (Pomodoro)')
