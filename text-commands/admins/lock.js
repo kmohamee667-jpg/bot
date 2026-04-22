@@ -29,7 +29,7 @@ export default async function lockCommand(message, args, action) {
         if (action === 'lock') {
             const embed = new EmbedBuilder()
                 .setColor('#aa0808')
-                .setDescription('🔒 تم إغلاق الشات بنجاح');
+                .setDescription(`✅🔒 تم إغلاق الشات بنجاح بواسطة:\n\`${message.author.displayName || message.author.username}\``);
             
             // Execute reply and permissions concurrently for maximum speed
             const promises = [
@@ -49,7 +49,7 @@ export default async function lockCommand(message, args, action) {
         } else if (action === 'unlock') {
             const embed = new EmbedBuilder()
                 .setColor('#00FF00')
-                .setDescription('🔓 تم فتح الشات بنجاح');
+                .setDescription(`✅🔓 تم فتح الشات بنجاح بواسطة:\n\`${message.author.displayName || message.author.username}\``);
             
             // Execute concurrently
             await Promise.all([
