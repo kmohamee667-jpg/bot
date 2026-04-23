@@ -41,7 +41,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: ['http://localhost:5174', 'https://bot.railway.app'],
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://bot-production-5d5b.up.railway.app'],
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
