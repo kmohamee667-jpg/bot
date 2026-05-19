@@ -1,8 +1,11 @@
 import { ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import PrivateVC from '../models/PrivateVC.js';
+import { generatePVCGuideImage } from '../utils/pvcImage.js';
+import Coin from '../models/Coin.js';
 
 const jointocreateId = '1494164521630306369';
 const creatingChannels = new Set();
+const voiceJoinTimes = new Map(); // key: userId, value: Date
 
 export default async (oldState, newState) => {
     console.log('voiceStateUpdate event triggered');
@@ -12,6 +15,52 @@ export default async (oldState, newState) => {
     if (!guild) {
         console.log('No guild found on newState — skipping');
         return;
+    }
+
+    const userId = member.id;
+    const guildId = guild.id;
+
+    // --- DYNAMIC VOICE TIME TRACKING FOR COIN CARD ---
+    try {
+        const oldChannel = oldState.channelId;
+        const newChannel = newState.channelId;
+
+        if (!oldChannel && newChannel) {
+            // User joined a voice channel
+            voiceJoinTimes.set(userId, new Date());
+        } else if (oldChannel && !newChannel) {
+            // User left a voice channel
+            const joinTime = voiceJoinTimes.get(userId);
+            if (joinTime) {
+                const diffMs = Date.now() - joinTime.getTime();
+                const diffMins = Math.floor(diffMs / 60000);
+                if (diffMins > 0) {
+                    await Coin.updateOne(
+                        { guildId, userId },
+                        { $inc: { voiceTime: diffMins } },
+                        { upsert: true }
+                    );
+                }
+                voiceJoinTimes.delete(userId);
+            }
+        } else if (oldChannel && newChannel && oldChannel !== newChannel) {
+            // User moved voice channels -> Update their time and reset join time
+            const joinTime = voiceJoinTimes.get(userId);
+            if (joinTime) {
+                const diffMs = Date.now() - joinTime.getTime();
+                const diffMins = Math.floor(diffMs / 60000);
+                if (diffMins > 0) {
+                    await Coin.updateOne(
+                        { guildId, userId },
+                        { $inc: { voiceTime: diffMins } },
+                        { upsert: true }
+                    );
+                }
+            }
+            voiceJoinTimes.set(userId, new Date());
+        }
+    } catch (err) {
+        console.error('[Voice Time Tracking Error]:', err);
     }
 
     console.log(`Guild ID: ${guild.id}`);
@@ -180,33 +229,33 @@ export default async (oldState, newState) => {
 
             const embed = new EmbedBuilder()
                 .setTitle('👑 لوحة تحكم الغرفة الملكية')
-                .setDescription(`مرحباً بك مجدداً! تم استعادة إعدادات غرفتك السابقة تلقائياً.\n\n**الإعدادات الحالية:**\n• **الاسم**: ${channelName}\n• **العدد**: ${limitText}\n• **الخصوصية**: ${privacyText}\n• **القفل**: ${lockText}\n• **الإخفاء**: ${hideText}`)
+                .setDescription('مرحباً بك مجدداً! تم استعادة إعدادات غرفتك السابقة تلقائياً.\n\nاستخدم الأزرار بالأسفل لإدارة غرفتك الصوتية بالكامل.')
                 .setColor('#FFD700')
                 .setImage('attachment://pvc_guide.png');
 
 
             const row1 = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('vc_rename').setLabel('الاسم').setEmoji('✏️').setStyle(ButtonStyle.Primary),
-                new ButtonBuilder().setCustomId('vc_privacy_menu').setLabel('الخصوصية').setEmoji('🛡️').setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId('vc_limit').setLabel('العدد').setEmoji('👥').setStyle(ButtonStyle.Secondary)
+                new ButtonBuilder().setCustomId('vc_rename').setEmoji('📝').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('vc_privacy_menu').setEmoji('🛡️').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('vc_limit').setEmoji('👥').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('vc_status').setEmoji('📊').setStyle(ButtonStyle.Secondary)
             );
 
             const row2 = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('vc_trust').setLabel('ثقة').setEmoji('🤝').setStyle(ButtonStyle.Success),
-                new ButtonBuilder().setCustomId('vc_block').setLabel('حظر').setEmoji('🚫').setStyle(ButtonStyle.Danger),
-                new ButtonBuilder().setCustomId('vc_transfer').setLabel('نقل ملكية').setEmoji('👑').setStyle(ButtonStyle.Danger)
+                new ButtonBuilder().setCustomId('vc_trust').setEmoji('🤝').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('vc_block').setEmoji('🚫').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('vc_transfer').setEmoji('👑').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('vc_trusted_list').setEmoji('📜').setStyle(ButtonStyle.Secondary)
             );
 
-            const row3 = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('vc_trusted_list').setLabel('قائمة الموثوقين').setEmoji('📜').setStyle(ButtonStyle.Primary)
-            );
+            console.log(`Generating and sending dynamic VC control panel guide to channel ${newChannel.id}`);
+            const guideImageBuffer = await generatePVCGuideImage().catch(() => null);
 
-            console.log(`Sending VC control panel to channel ${newChannel.id}`);
             await newChannel.send({
                 content: `<@${member.id}>`,
                 embeds: [embed],
-                components: [row1, row2, row3],
-                files: [{ attachment: 'imgs/pvc_guide.png', name: 'pvc_guide.png' }]
+                components: [row1, row2],
+                files: guideImageBuffer ? [{ attachment: guideImageBuffer, name: 'pvc_guide.png' }] : []
             }).catch(err => console.error('[VC Panel Send Fail]:', err));
             console.log('[VC Panel] Sent successfully');
 

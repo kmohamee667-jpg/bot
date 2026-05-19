@@ -9,6 +9,7 @@ import connectDB from './db/connectdb.js';
 import AdminCommand from './models/AdminCommand.js';
 import GuildSettings from './models/GuildSettings.js';
 import User from './models/User.js';
+import Coin from './models/Coin.js';
 import express from 'express';
 import path from 'path';
 import cors from 'cors';
@@ -24,6 +25,9 @@ import TimerManager from './utils/TimerManager.js';
 
 // Market Manager
 import MarketManager from './utils/MarketManager.js';
+
+// PVC Image Generator (Cairo Fonts Init)
+import { initCairoFonts } from './utils/pvcImage.js';
 
 // Command Imports
 import mas7Command from './text-commands/admins/mas7.js';
@@ -60,6 +64,9 @@ const client = new Client({
 });
 
 (async () => {
+    // Download and register Cairo fonts at boot
+    await initCairoFonts();
+    
     await connectDB();
     
     // --- INITIAL COMMAND SETUP ---

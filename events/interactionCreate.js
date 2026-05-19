@@ -221,6 +221,47 @@ export default async (interaction) => {
             });
         }
 
+        if (interaction.customId === 'vc_status') {
+            if (!vcData) {
+                return interaction.reply({ 
+                    content: '❌ لم يتم العثور على بيانات لهذه الغرفة.', 
+                    flags: [MessageFlags.Ephemeral] 
+                });
+            }
+
+            const privacyText = {
+                all: 'تظهر للولاد والبنات 👥',
+                female: 'تظهر للبنات بس 👩',
+                male: 'تظهر للولاد بس 👨'
+            }[vcData.privacyMode] || 'تظهر للكل 👥';
+
+            const limitText = vcData.limit === 0 ? 'مفتوح 👥' : `${vcData.limit} عضو`;
+            const lockText = vcData.isLocked ? 'مقفول 🔒' : 'مفتوح 🔓';
+            const hideText = vcData.isHidden ? 'مخفي 👻' : 'ظاهر 👁️';
+            const channelName = channel ? channel.name : vcData.name;
+
+            const statusEmbed = new EmbedBuilder()
+                .setTitle('📊 حالة الغرفة الحالية')
+                .setColor('#2B2D31')
+                .setDescription(`هذه هي إعدادات غرفتك الصوتية الحالية:`)
+                .addFields(
+                    { name: '📝 الاسم', value: `\`${channelName}\``, inline: true },
+                    { name: '👥 الحد الأقصى', value: `\`${limitText}\``, inline: true },
+                    { name: '🛡️ الخصوصية', value: `\`${privacyText}\``, inline: true },
+                    { name: '🔒 القفل', value: `\`${lockText}\``, inline: true },
+                    { name: '👁️ الإخفاء', value: `\`${hideText}\``, inline: true },
+                    { name: '🤝 الموثوقين', value: `\`${vcData.trustedUsers.length}\` عضو`, inline: true },
+                    { name: '🚫 المحظورين', value: `\`${vcData.blockedUsers.length}\` عضو`, inline: true }
+                )
+                .setFooter({ text: `طلب بواسطة: ${interaction.user.username}` })
+                .setTimestamp();
+
+            return interaction.reply({
+                embeds: [statusEmbed],
+                flags: [MessageFlags.Ephemeral]
+            });
+        }
+
         // --- VC TIMER STOP BUTTON ---
         if (interaction.customId === 'vc_timer_stop') {
             const session = await TimerSession.findOne({ channelId: interaction.channelId });

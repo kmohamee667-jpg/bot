@@ -38,10 +38,20 @@ class TimerManager {
                             reward = 2;
                         }
                         
-                        // Update Coin balance and studyTime
+                        // Dynamically update the specific day index in weeklyActivity (Monday through Sunday)
+                        const day = new Date().getDay();
+                        const idx = day === 0 ? 6 : day - 1; // Map 0 (Sunday) to index 6, 1-6 (Mon-Sat) to index 0-5
+                        
+                        // Update Coin balance, studyTime and weeklyActivity
                         await Coin.findOneAndUpdate(
                             { guildId: guild.id, userId: member.id },
-                            { $inc: { balance: reward, studyTime: 1 } },
+                            { 
+                                $inc: { 
+                                    balance: reward, 
+                                    studyTime: 1,
+                                    [`weeklyActivity.${idx}`]: 1
+                                } 
+                            },
                             { upsert: true }
                         );
                     }
@@ -123,6 +133,10 @@ class TimerManager {
     }
 
     async runLoop(interaction, session, theme) {
+        // Send the initial message immediately so the user sees it instantly
+        const initialRemaining = Math.max(0, session.endTime - Date.now());
+        await this.updateMessage(interaction, session, theme, initialRemaining);
+
         const interval = setInterval(async () => {
             const currentSession = await TimerSession.findById(session._id);
             if (!currentSession || currentSession.status === 'finished') {
@@ -149,8 +163,9 @@ class TimerManager {
         const totalDuration = (session.status === 'study' ? session.studyTime : session.breakTime) * 60000;
         const percentage = remainingMs / totalDuration;
         
-        const minutes = Math.floor(remainingMs / 60000);
-        const seconds = Math.floor((remainingMs % 60000) / 1000);
+        const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
         const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
         // Fetch latest channel info for member count
@@ -223,6 +238,23 @@ class TimerManager {
             const vc = interaction.guild.channels.cache.get(session.voiceChannelId);
             const mentions = vc?.members.map(m => `<@${m.id}>`).join(' ') || '';
             
+            // Increment completedCycles for all study members in the voice room
+            try {
+                if (vc && vc.isVoiceBased()) {
+                    for (const [, member] of vc.members) {
+                        if (member.user.bot) continue;
+                        await Coin.findOneAndUpdate(
+                            { guildId: interaction.guild.id, userId: member.id },
+                            { $inc: { completedCycles: 1 } },
+                            { upsert: true }
+                        );
+                        console.log(`[TimerManager] Incremented completedCycles for ${member.user.username}`);
+                    }
+                }
+            } catch (err) {
+                console.error('[TimerManager Completed Cycle Error]:', err);
+            }
+
             const breakStartEmbed = new EmbedBuilder()
                 .setColor('#00FF00')
                 .setTitle('☕ وقت الاستراحة')
