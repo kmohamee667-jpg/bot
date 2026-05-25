@@ -1,7 +1,8 @@
 import config from '../config/config.js';
-import { EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, AttachmentBuilder } from 'discord.js';
+import { generateWelcomeGif } from '../utils/welcomeGif.js';
 
-export default (member) => {
+export default async (member) => {
     const allowedServers = process.env.ALLOW_SERVER?.split(',') || [];
     if (!allowedServers.includes(member.guild.id)) return;
 
@@ -19,10 +20,11 @@ export default (member) => {
 
         const mentionStrings = mentionChannels.map(id => `<#${id}>`);
 
-
-        channel.send({ content: member.toString() });
-
         const serverIcon = member.guild.iconURL({ dynamic: true, size: 4096 });
+
+        const avatarUrl = member.user.displayAvatarURL({ extension: 'png', size: 256 });
+        const gifBuffer = await generateWelcomeGif(member.user.username, avatarUrl);
+        const attachment = new AttachmentBuilder(gifBuffer, { name: 'welcome.gif' });
 
         const embed = new EmbedBuilder()
             .setDescription(`
@@ -45,7 +47,8 @@ export default (member) => {
                 ✧･ﾟ: *✧･ﾟ:* 　　 *:･ﾟ✧*:･ﾟ✧
             `)
             .setColor('#001741')
-            .setThumbnail(serverIcon);
+            .setThumbnail(serverIcon)
+            .setImage('attachment://welcome.gif');
 
-        channel.send({ embeds: [embed] }).catch(console.error);
+        channel.send({ content: member.toString(), embeds: [embed], files: [attachment] }).catch(console.error);
 };

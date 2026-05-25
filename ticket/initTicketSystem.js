@@ -1,6 +1,7 @@
-import { EmbedBuilder, Colors } from 'discord.js';
+import { EmbedBuilder, AttachmentBuilder } from 'discord.js';
 import config from '../config/config.js';
-import { createTicketRow } from './buttonsHandler.js';
+import { createTicketSelectMenu } from './buttonsHandler.js';
+import { generateTicketGif } from '../utils/ticketGif.js';
 
 export const initTicketSystem = async (client, config) => {
     console.log('🔄 [TICKET INIT] Starting...');
@@ -20,29 +21,45 @@ export const initTicketSystem = async (client, config) => {
             )
         );
 
+        // Extract option labels dynamically from the select menu
+        const selectMenuRow = createTicketSelectMenu();
+        const selectMenu = selectMenuRow.components[0];
+        const optionLabels = selectMenu.options.map(opt => `${opt.data.emoji.name} ${opt.data.label}`);
+
+        // Generate GIF
+        console.log('🔄 [TICKET INIT] Generating GIF...');
+        const guild = channel.guild;
+        const iconUrl = guild.iconURL({ extension: 'png', size: 256 });
+        const gifBuffer = await generateTicketGif(guild.name, iconUrl, optionLabels);
+        const attachment = new AttachmentBuilder(gifBuffer, { name: 'ticket_banner.gif' });
+
         const embed = new EmbedBuilder()
-            .setTitle('🎫 عاوز تتواصل مع الإداره ؟')
-            .setColor('Blurple')
-            .setTimestamp();
+            .setColor('#1E212A') 
+            .setDescription(`**نظام التذاكر - ${guild.name} 🎫**\n\nمرحباً بك في نظام التذاكر!\nاختر نوع التذكرة من القائمة المنسدلة:`)
+            .setImage('attachment://ticket_banner.gif')
+            .setFooter({ text: 'Galaxy Ticket System', iconURL: client.user.displayAvatarURL() });
 
         const msg = await channel.send({ 
             embeds: [embed], 
-            components: [createTicketRow()] 
+            files: [attachment],
+            components: [createTicketSelectMenu()] 
         });
 
         console.log('✅ [TICKET INIT] Message sent ID:', msg.id);
-        // Refresh components every 6 hours (Discord button limit)
+        
+        // Refresh components every 6 hours (Discord interaction limit on old messages can be an issue, though menus usually last)
         setInterval(async () => {
             try {
                 const freshMsg = await channel.messages.fetch(msg.id);
-                if (freshMsg.components.length === 0) {
-                    await freshMsg.edit({ components: [createTicketRow()] });
-                    console.log('🔄 [TICKET] Button refreshed');
+                if (freshMsg) {
+                    await freshMsg.edit({ components: [createTicketSelectMenu()] });
+                    console.log('🔄 [TICKET] Menu refreshed');
                 }
             } catch (e) {
-                console.error('Button refresh failed:', e);
+                console.error('Menu refresh failed:', e);
             }
         }, 6 * 60 * 60 * 1000); // 6 hours
+
     } catch (error) {
         console.error('❌ [TICKET INIT ERROR]:', error);
     }

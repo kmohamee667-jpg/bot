@@ -155,14 +155,12 @@ client.on('channelDelete', (await import('./events/channelDelete.js')).default);
 client.once('clientReady', async () => {
     console.log(`✅ Bot ready as ${client.user.tag}`);
     await initTicketSystem(client, config);
-
+    
     // Initialize Timer Manager Reward Loop
     TimerManager.startRewardInterval(client);
     
     // Initialize Role Market
     MarketManager.initMarket(client);
-
-    await initTicketSystem(client, config);
 
     // --- WHITELIST CLEANUP (LEAVE UNAUTHORIZED GUILDS) ---
     const unauthorized = client.guilds.cache.filter(g => !config.allowedServers.includes(g.id));

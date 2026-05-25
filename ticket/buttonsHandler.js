@@ -1,12 +1,17 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
 
-export const createTicketRow = () => {
+export const createTicketSelectMenu = () => {
     return new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-            .setCustomId('ticket_create')
-            .setLabel('Create Ticket')
-            .setStyle(ButtonStyle.Success)
-            .setEmoji('🎫')
+        new StringSelectMenuBuilder()
+            .setCustomId('ticket_select')
+            .setPlaceholder('اختر نوع التذكرة')
+            .addOptions(
+                new StringSelectMenuOptionBuilder().setLabel('دعم عام').setDescription('استفسار أو مشكلة عامة').setValue('general_support').setEmoji('💬')
+                // new StringSelectMenuOptionBuilder().setLabel('بلاغ عن عضو').setDescription('الإبلاغ عن مخالفة عضو').setValue('report_member').setEmoji('📓'),
+                // new StringSelectMenuOptionBuilder().setLabel('بلاغ عن إداري').setDescription('شكوى ضد إداري').setValue('report_admin').setEmoji('❗'),
+                // new StringSelectMenuOptionBuilder().setLabel('تقديم للإدارة').setDescription('طلب الانضمام للإدارة').setValue('apply_admin').setEmoji('📄'),
+                // new StringSelectMenuOptionBuilder().setLabel('تقديم كمبرمج').setDescription('طلب الانضمام كمبرمج').setValue('apply_dev').setEmoji('📝')
+            )
     );
 };
 

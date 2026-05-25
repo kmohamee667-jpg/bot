@@ -35,16 +35,21 @@ export default async (interaction) => {
         return;
     }
 
-    // 2. TICKET BUTTONS (COMPLETE HANDLER)
-    if (interaction.isButton() && (interaction.customId === 'ticket_create' || interaction.customId.startsWith('ticket_'))) {
+    // 2. TICKET HANDLER (BUTTONS & SELECT MENUS)
+    const isTicketButton = interaction.isButton() && interaction.customId.startsWith('ticket_');
+    const isTicketMenu = interaction.isStringSelectMenu() && interaction.customId === 'ticket_select';
+
+    if (isTicketButton || isTicketMenu) {
         console.log('🎫 TICKET PRIORITY HANDLER!');
         const { handleCreateTicket, confirmTicketCreation, handleCloseTicket, executeCloseTicket, handleClaimTicket, handleReopenTicket, handleDeleteTicket } = await import('../ticket/ticketManager.js');
         
         try {
+            if (isTicketMenu) {
+                await handleCreateTicket(interaction);
+                return;
+            }
+
             switch(interaction.customId) {
-                case 'ticket_create':
-                    await handleCreateTicket(interaction);
-                    break;
                 case 'ticket_confirm_yes':
                     await confirmTicketCreation(interaction);
                     break;
@@ -548,12 +553,17 @@ export default async (interaction) => {
     }
 
     // TICKET SYSTEM
-    if (interaction.isButton() && (interaction.customId === 'ticket_create' || interaction.customId.startsWith('ticket_'))) {
+    const isFallbackTicketButton = interaction.isButton() && interaction.customId.startsWith('ticket_');
+    const isFallbackTicketMenu = interaction.isStringSelectMenu() && interaction.customId === 'ticket_select';
+
+    if (isFallbackTicketButton || isFallbackTicketMenu) {
         const { handleCreateTicket, confirmTicketCreation, handleCloseTicket, executeCloseTicket, handleClaimTicket, handleReopenTicket, handleDeleteTicket } = await import('../ticket/ticketManager.js');
         try {
+            if (isFallbackTicketMenu) {
+                await handleCreateTicket(interaction);
+                return;
+            }
             switch(interaction.customId) {
-                case 'ticket_create': await handleCreateTicket(interaction); break;
-                case 'ticket_confirm_yes': await confirmTicketCreation(interaction); break;
                 case 'ticket_confirm_no':
                 case 'ticket_close_confirm_no': await interaction.update({ content: 'تم إلغاء العملية ✅', components: [] }); break;
                 case 'ticket_close': await handleCloseTicket(interaction); break;
