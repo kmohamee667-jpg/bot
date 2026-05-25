@@ -1,4 +1,4 @@
-import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
+import { createCanvas, GlobalFonts, loadImage } from '@napi-rs/canvas';
 import path from 'path';
 import fs from 'fs';
 import https from 'https';
@@ -63,146 +63,111 @@ export async function initCairoFonts() {
 export async function generatePVCGuideImage() {
     // Canvas dimensions
     const width = 1200;
-    const height = 500;
+    const height = 450;
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // 1. Dark Slate Gradient Background
-    const bgGrad = ctx.createLinearGradient(0, 0, width, height);
-    bgGrad.addColorStop(0, '#0c0c16');
-    bgGrad.addColorStop(0.5, '#08080f');
-    bgGrad.addColorStop(1, '#050508');
-    ctx.fillStyle = bgGrad;
+    // 1. Solid Background (Dark Navy/Slate for premium look)
+    ctx.fillStyle = '#1a1d27';
     ctx.fillRect(0, 0, width, height);
 
-    // 2. Outer Soft Neon/Purple Border
-    ctx.save();
-    ctx.strokeStyle = 'rgba(128, 90, 213, 0.15)'; // Soft purple border
-    ctx.lineWidth = 4;
+    // Add Wave Design (Organic, shallow corner shapes)
+    ctx.fillStyle = '#252936';
+    
+    // Top-Left Smooth Wave
     ctx.beginPath();
-    ctx.roundRect(15, 15, width - 30, height - 30, 24);
-    ctx.stroke();
-    ctx.restore();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(350, 0);
+    // A shallow, elegant curve
+    ctx.bezierCurveTo(200, 30, 80, 150, 0, 300);
+    ctx.fill();
 
-    // 3. Center Header Title: "🎧 لوحة تحكم الغرفة الملكية"
+    // Top-Right Smooth Wave
+    ctx.beginPath();
+    ctx.moveTo(width, 0);
+    ctx.lineTo(width - 350, 0);
+    // Mirrored on the right
+    ctx.bezierCurveTo(width - 200, 30, width - 80, 150, width, 300);
+    ctx.fill();
+
+    // 2. Center Header Title
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 36px "Cairo Bold", "Cairo", "Segoe UI", Arial';
-    
-    // Add text shadow for glowing/premium effect
-    ctx.shadowColor = 'rgba(255, 255, 255, 0.15)';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    
-    ctx.fillText('👑 أدوات التحكم بالغرفة الملكية', width / 2, 70);
+    ctx.font = 'bold 38px "Cairo Bold", "Cairo", "Segoe UI", Arial';
+    ctx.fillText('ادوات التحكم في الغرفه الصوتيه', width / 2, 65);
     ctx.restore();
 
-    // Categories structure (dynamic categories and items)
-    const categories = [
-        {
-            title: "إعدادات الغرفة",
-            items: [
-                { emoji: "📝", label: "تعديل الاسم", color: "rgba(0, 191, 255, 0.35)" },
-                { emoji: "🛡️", label: "الخصوصية", color: "rgba(0, 255, 127, 0.35)" },
-                { emoji: "👥", label: "الحد الأقصى", color: "rgba(186, 85, 211, 0.35)" },
-                { emoji: "📊", label: "عرض الحالة", color: "rgba(255, 215, 0, 0.35)" }
-            ]
-        },
-        {
-            title: "الصلاحيات",
-            items: [
-                { emoji: "🤝", label: "إضافة ثقة", color: "rgba(0, 255, 255, 0.35)" },
-                { emoji: "📜", label: "الموثوقين", color: "rgba(238, 130, 238, 0.35)" }
-            ]
-        },
-        {
-            title: "الملكية والإشراف",
-            items: [
-                { emoji: "👑", label: "نقل الملكية", color: "rgba(255, 165, 0, 0.35)" },
-                { emoji: "🚫", label: "حظر عضو", color: "rgba(255, 69, 0, 0.35)" }
-            ]
-        }
+    const items = [
+        { label: "تعديل الاسم", emojiId: "1508307894720921770" },
+        { label: "تراست عضو", emojiId: "1508309775018885181" },
+        { label: "حظر عضو", emojiId: "1508308168390742017" },
+        { label: "نقل ملكية", emojiId: "1508309385670164622" },
+        { label: "الخصوصية", emojiId: "1508308707690283110" },
+        { label: "حالة الغرفة", emojiId: "1508310210198900806" },
+        { label: "الموثوقين", emojiId: "1508310598260097076" },
+        { label: "الحد الأقصى", emojiId: "1508311004252078230" }
     ];
 
-    // Coordinates setup for 3 columns
-    const columnWidth = 365;
-    const columnHeight = 350;
-    const columnTop = 120;
-    const gap = 20;
-    const startX = 30;
+    // load emojis
+    for (let item of items) {
+        if (item.emojiId) {
+            try {
+                item.img = await loadImage(`https://cdn.discordapp.com/emojis/${item.emojiId}.png`);
+            } catch(e) {
+                console.error('Failed to load emoji', item.emojiId);
+            }
+        }
+    }
 
-    categories.forEach((cat, index) => {
-        const colX = startX + index * (columnWidth + gap);
+    // Grid Layout (4 columns x 2 rows)
+    const cols = 4;
+    const rectWidth = 275; // Increased button width
+    const rectHeight = 78; // Increased button height
+    const gapX = 18;       // Slightly smaller gap to fit larger buttons
+    const gapY = 28;
+    
+    // Center the grid
+    const startX = (width - (cols * rectWidth + (cols - 1) * gapX)) / 2;
+    const startY = 160;
 
-        // A. Column Card Background (translucent dark panels)
+    items.forEach((item, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        
+        const x = startX + col * (rectWidth + gapX);
+        const y = startY + row * (rectHeight + gapY);
+
+        // Box background
         ctx.save();
-        ctx.fillStyle = 'rgba(16, 16, 28, 0.65)';
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-        ctx.lineWidth = 1;
+        ctx.fillStyle = '#14161d'; // Very dark background for boxes
+        ctx.strokeStyle = '#2d3142'; // Subtle border
+        ctx.lineWidth = 1.5;
+        
         ctx.beginPath();
-        ctx.roundRect(colX, columnTop, columnWidth, columnHeight, 18);
+        ctx.roundRect(x, y, rectWidth, rectHeight, 18); // Increased border radius
         ctx.fill();
         ctx.stroke();
         ctx.restore();
 
-        // B. Column Title (Centered inside column)
+        // Icon on the LEFT
+        const iconSize = 42; // Increased icon size
+        const iconX = x + 20; // 20px padding from left
+        const iconY = y + (rectHeight - iconSize) / 2;
+
+        if (item.img) {
+            ctx.drawImage(item.img, iconX, iconY, iconSize, iconSize);
+        }
+
+        // Draw Text on the RIGHT
         ctx.save();
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = 'bold 20px "Cairo Bold", "Cairo", "Segoe UI", Arial';
-        ctx.fillText(cat.title, colX + columnWidth / 2, columnTop + 25);
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#f8fafc'; // Crisp white/gray text
+        ctx.font = 'bold 24px "Cairo Bold", "Cairo", "Segoe UI", Arial'; // Increased font size
+        ctx.fillText(item.label, x + rectWidth - 20, y + rectHeight / 2); // 20px padding from right
         ctx.restore();
-
-        // C. Column Title Separator Line
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(colX + 30, columnTop + 65);
-        ctx.lineTo(colX + columnWidth - 30, columnTop + 65);
-        ctx.stroke();
-        ctx.restore();
-
-        // D. Draw Items Inside Column
-        const itemCount = cat.items.length;
-        const itemWidth = columnWidth / itemCount;
-
-        cat.items.forEach((item, itemIndex) => {
-            const centerX = colX + itemIndex * itemWidth + itemWidth / 2;
-            const centerY = columnTop + 175;
-
-            // 1. Draw glowing outer aura
-            ctx.save();
-            ctx.shadowColor = item.color;
-            ctx.shadowBlur = 24;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 36, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-
-            // 2. Draw Emoji centered
-            ctx.save();
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            // Emojis need larger sizes to be crystal clear
-            ctx.font = '38px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", Arial';
-            ctx.fillText(item.emoji, centerX, centerY);
-            ctx.restore();
-
-            // 3. Draw Arabic Label below it using Cairo
-            ctx.save();
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            ctx.fillStyle = '#a0aec0';
-            ctx.font = 'bold 15px "Cairo", "Segoe UI", Arial';
-            ctx.fillText(item.label, centerX, centerY + 65);
-            ctx.restore();
-        });
     });
 
     return canvas.toBuffer('image/png');

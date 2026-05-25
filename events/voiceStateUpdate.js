@@ -235,17 +235,17 @@ export default async (oldState, newState) => {
 
 
             const row1 = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('vc_rename').setEmoji('📝').setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId('vc_privacy_menu').setEmoji('🛡️').setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId('vc_limit').setEmoji('👥').setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId('vc_status').setEmoji('📊').setStyle(ButtonStyle.Secondary)
+                new ButtonBuilder().setCustomId('vc_rename').setEmoji('1508307894720921770').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('vc_privacy_menu').setEmoji('1508308707690283110').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('vc_limit').setEmoji('1508311004252078230').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('vc_status').setEmoji('1508310210198900806').setStyle(ButtonStyle.Secondary)
             );
 
             const row2 = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('vc_trust').setEmoji('🤝').setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId('vc_block').setEmoji('🚫').setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId('vc_transfer').setEmoji('👑').setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId('vc_trusted_list').setEmoji('📜').setStyle(ButtonStyle.Secondary)
+                new ButtonBuilder().setCustomId('vc_trust').setEmoji('1508309775018885181').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('vc_block').setEmoji('1508308168390742017').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('vc_transfer').setEmoji('1508309385670164622').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('vc_trusted_list').setEmoji('1508310598260097076').setStyle(ButtonStyle.Secondary)
             );
 
             console.log(`Generating and sending dynamic VC control panel guide to channel ${newChannel.id}`);
